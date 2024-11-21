@@ -28,6 +28,17 @@ stop-database:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Stopping database..."
 	@docker compose down
 
+.PHONY: seed-database
+seed-database:
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Seeding database..."
+	@/bin/bash ./dynamodb_seed/seed_dynamodb.sh
+
+.PHONE: reset-database
+reset-database:
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Resetting database..."
+	@/bin/bash ./dynamodb_seed/reset_dynamodb.sh
+
+.PHONY: run-unit-test
 run-unit-test:
 	go test -cover ./internal/service ./internal/config ./internal/database ./internal/routes ./cmd/api
 
