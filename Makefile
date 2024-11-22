@@ -31,12 +31,12 @@ stop-database:
 .PHONY: seed-database
 seed-database:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Seeding database..."
-	@/bin/bash ./dynamodb_seed/seed_dynamodb.sh
+	@cd ./dynamodb_seed && /bin/bash ./seed_dynamodb.sh
 
 .PHONE: reset-database
 reset-database:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Resetting database..."
-	@/bin/bash ./dynamodb_seed/reset_dynamodb.sh
+	@/cd ./dynamodb_seed && /bin/bash ./reset_dynamodb.sh
 
 .PHONY: run-unit-test
 run-unit-test:
