@@ -132,7 +132,6 @@ After installing Visual Studio Code, you should head to the Extensions tab and i
 extensions\*:
 
 - [Go](https://marketplace.visualstudio.com/items?itemName=golang.Go)
-- [PostgreSQL](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-postgresql)
   
 Other useful VS Code extensions include:
 
@@ -144,7 +143,7 @@ Other useful VS Code extensions include:
 
 Create your own repository using the `Use this template` in the top right of the webpage. Make
 yourself the owner, and give the repository the same name as the template (
-Go-API-Postgres-Tech-Challenge).
+Go-API-DynamoDB-Tech-Challenge).
 Once your repository is cloned locally, you are all set to move on to the next step.
 
 ## Database Setup

@@ -1,5 +1,5 @@
 #!/bin/bash
-table_name="Content"
+table_name="BlogContent"
 
 echo "Deleting all table in dynamodb"
 aws dynamodb delete-table \

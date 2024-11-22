@@ -1,5 +1,5 @@
 {
-  "TableName": "Content",
+  "TableName": "BlogContent",
   "KeySchema": [
     {
       "AttributeName": "PK",
@@ -20,10 +20,6 @@
       "AttributeType": "S"
     },
     {
-      "AttributeName": "ItemType",
-      "AttributeType": "S"
-    },
-    {
       "AttributeName": "GSI1PK",
       "AttributeType": "S"
     },
@@ -34,7 +30,19 @@
   ],
   "GlobalSecondaryIndexes": [
     {
-      "IndexName": "GSI_UserComments",
+      "IndexName": "GSI2",
+      "KeySchema": [
+        {
+          "AttributeName": "SK",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    },
+    {
+      "IndexName": "GSI1",
       "KeySchema": [
         {
           "AttributeName": "GSI1PK",
@@ -43,18 +51,6 @@
         {
           "AttributeName": "GSI1SK",
           "KeyType": "RANGE"
-        }
-      ],
-      "Projection": {
-        "ProjectionType": "ALL"
-      }
-    },
-    {
-      "IndexName": "GSI_ItemType",
-      "KeySchema": [
-        {
-          "AttributeName": "ItemType",
-          "KeyType": "HASH"
         }
       ],
       "Projection": {

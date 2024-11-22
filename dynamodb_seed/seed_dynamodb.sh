@@ -1,7 +1,7 @@
 #!/bin/bash
-url="http://dynamodb-local:8000"
+url="http://localhost:8000"
 
-table_name="Content"
+table_name="BlogContent"
 schema_file="table_schema.json"
 data_file="batch_items.json"
 

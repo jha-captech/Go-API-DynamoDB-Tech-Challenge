@@ -1,5 +1,5 @@
 #!/bin/bash
-table_name="Content"
+table_name="BlogContent"
 
 # export schema
 echo "Exporting schema for table: $table_name"
