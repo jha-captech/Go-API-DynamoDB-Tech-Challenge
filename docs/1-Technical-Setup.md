@@ -193,7 +193,7 @@ To create your Go project, open a terminal in the root project directory and run
 command, replacing `[name]` with your name.
 
 ```bash
-go mod init github.com/[name]/blog
+go mod init github.com/[name]/blog && go mod tidy
 ```
 
 Next, run the following commands that will install the required libraries for the tech challenge.
@@ -207,8 +207,11 @@ go get github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue
 go get github.com/aws/aws-sdk-go-v2/service/dynamodb
 go get github.com/aws/aws-sdk-go-v2/service/dynamodb/types
 go get github.com/swaggo/http-swagger/v2
+go get github.com/google/uuid
 go get github.com/swaggo/swag@latest
+go get github.com/stretchr/testify
 go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/vektra/mockery/v2@v2.49.0
 ```
 
 ## Next Steps

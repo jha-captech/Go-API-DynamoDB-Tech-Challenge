@@ -2,8 +2,21 @@ SHELL := /bin/bash
 
 .PHONY: swag-init
 swag-init:
-	swag init -g internal/routes/routes.go --output "cmd/api/docs"
-	swag fmt
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Generating swagger docs..."
+	@swag init \
+		--generalInfo "./../../internal/routes/routes.go" \
+		--output "cmd/api/docs" \
+		--dir "./internal/handlers"
+	@swag fmt
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Swagger docs generated"
+
+.PHONY: mock-gen
+mock-gen:
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Generating mocks..."
+	@$(MAKE) LOG MSG_TYPE=debug LOG_MESSAGE="Delete existing mocks"
+	@find ./internal -type -d | grep -v ^.*mock$$ | xargs rm -rf
+	@mockery
+	@$(MAKE) LOG MSG_TYPE=success LOG_MESSAGE="Mocks generated"
 
 .PHONY: start-web-app 
 start-web-app:
