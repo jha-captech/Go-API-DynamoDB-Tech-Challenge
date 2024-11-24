@@ -49,8 +49,8 @@ By default, you should see the following file structure in your root directory
 │   └── api/
 │       └── main.go
 ├── internal/
-│   ├── config/
-│   │   └── config.go
+│   ├── configuration/
+│   │   └── configuration.go
 │   ├── handlers
 │   │   └── handlers.go
 │   ├── routes/
@@ -62,6 +62,8 @@ By default, you should see the following file structure in your root directory
 │   └── services/
 │       └── user.go
 ├── .gitignore
+├── .env.local
+├── docker-compose.yaml
 ├── Makefile
 └── README.md
 ```
