@@ -251,12 +251,12 @@ First, in `cmd/api/main.go`, lets update `run`. Since connection to the database
 ```go
 // connect to dynamoDB
 logger.InfoContext(ctx, "connecting to DynamoDB")
-awscfg, err := config.LoadDefaultConfig(ctx)
+awsCfg, err := config.LoadDefaultConfig(ctx)
 if err != nil {
 	return fmt.Errorf("[in main.run] failed to load configuration: %w", err)
 }
 
-client := dynamodb.NewFromConfig(awscfg, func(options *dynamodb.Options) {
+client := dynamodb.NewFromConfig(awsCfg, func(options *dynamodb.Options) {
 	options.BaseEndpoint = aws.String(cfg.DynamoEndpoint)
 })
 
@@ -290,31 +290,29 @@ Tables:
 
 Congrats! You have managed to connect to your DynamoDB instance from your application.
 
-> Note: Before we continue, you can remove the temporary code that lists all tables in the database.
+> [!Note]
+> Before we continue, you can remove the temporary code that lists all tables in the database.
 
-### Setting up User Model
+### Setting up our models
 
 Before we go any further, lets discuss DynamoDB and how it differs from a traditional SQL database. 
 DynamoDB is a NoSQL database, which means it doesn't use tables, rows, and columns like a traditional 
 SQL database. Instead, it uses tables, items, and attributes. An item is a single record in a table, 
 and an attribute is a single piece of data in an item.
 
-We also need to discus how we interact with DynamoDB using the `aws-sdk-go-v2` package. The `aws-sdk-go-v2` 
-package provides a `dynamodb` package that contains a `Client` struct that we can use to interact with 
+We will interact with DynamoDB using the `aws-sdk-go-v2` package. The `aws-sdk-go-v2` 
+package provides a `dynamodb` subpackage that contains a `Client` struct that we can use to interact with 
 DynamoDB. The `Client` struct has methods that correspond to the various DynamoDB operations such as 
 `Query`, `GetItem`, `PutItem`, `UpdateItem`, and `DeleteItem`. Each of these methods returns a specific 
 output struct that contains both the data returned from the database and metadata about the request.
 
 The `aws-sdk-go-v2` package also provides a `feature/dynamodb/attributevalue` package that we can use 
 to convert Go structs to and from the `types.AttributeValue` struct that is used to represent data in 
-DynamoDB. This package provides a `MarshalMap` function that can be used to convert a Go struct to a 
-map of `types.AttributeValue` and an `UnmarshalMap` function that can be used to convert a map of 
-`types.AttributeValue` to a Go struct. Its also worth noting that there are other marshalling functions 
-the package provides that can be used to convert Go structs to and from other types of data.
-
-In order to use the `attributevalue` package, we need to define Go structs that represent the data in 
-the database. We use struct tags on our modules to tell the sdk what fields in the struct correspond 
+DynamoDB. In order to use the `attributevalue` package, we need to define Go structs that represent the data in
+DynamoDB. We use struct tags on our modules to tell the package what fields in the struct correspond 
 to what attributes in the database.
+
+---
 
 With that context in mind, lets start creating our models.
 
