@@ -176,7 +176,7 @@ Now that the database is running and seeded with data, we can connect to it usin
 - Next, click `+ Add connection`:
     ![workbench.02.png](Images/nosql_workbench/workbench.02.png)
   
-- In the `Ad a new database connection` popup, select `DynamoDB Local` and then fill out the connection details as shown bellow and click `Connect`:
+- In the `Ad a new database connection` popup, select `DynamoDB Local` and then fill out the connection details as shown bellow and click `BlogConnect`:
     ![workbench.03.png](Images/nosql_workbench/workbench.03.png)
 
 - You should now see a new connection in the `Operation Builder`! Click on `open`:
