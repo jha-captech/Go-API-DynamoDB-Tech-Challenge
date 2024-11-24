@@ -86,8 +86,7 @@ colima start
 colima stop
 ```
 
-> ---
->
+> [!TIP]
 >  If you run into an error such as:
 >
 >
@@ -96,19 +95,19 @@ colima stop
 >
 > please reference this
 > [help article](https://github.com/abiosoft/colima/blob/main/docs/FAQ.md#cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-is-the-docker-daemon-running).
->
-> ---
 
-> ---
->
-> If you run into an error such as: `docker: 'compose' is not a docker command.`, try the following:
+
+> [!TIP]
+> If you run into an error such as:
+> 
+> `docker: 'compose' is not a docker command.`
+> 
+> try the following:
 >
 > - Create a symlink to the docker-compose plugin by running the following command:
 >  ```bash
 >  [ ! -d "~/.docker/cli-plugins" ] && mkdir -p "~/.docker/cli-plugins" && ln -s /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
 >  ```
->
-> ---
 
 ### NoSQL Workbench for DynamoDB 
 
@@ -163,7 +162,8 @@ Now that the database is running, we can seed it with data. To do this, run the 
 make seed-database
 ```
 
-> Note, if you need to reset your database and reseed it with default data, you can do so by running the following command:
+> [!TIP]
+> If you need to reset your database and reseed it with default data, you can do so by running the following command:
 > ```bash
 > make reset-database && make seed-database
 > ```
