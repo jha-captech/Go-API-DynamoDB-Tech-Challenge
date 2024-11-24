@@ -34,7 +34,7 @@
 ## Overview
 
 As previously mentioned, this challenge is centered around the use of the `net/http` library for
-developing API's. Our web server will connect to a PostgreSQL database in the backend. This
+developing APIs. Our web server will connect to a PostgreSQL database in the backend. This
 walkthrough will consist of a step-by-step guide for creating the REST API for the `users` table in
 the database. By the end of the walkthrough, you will have endpoints capable of creating, reading,
 updating, and deleting from the `users` table.
@@ -323,8 +323,8 @@ package models
 type DynamoDBBase struct {
     PK     string `dynamodbav:"PK"`
     SK     string `dynamodbav:"SK"`
-    GCI1PK string `dynamodbav:"GSI1PK"`
-    GCI1SK string `dynamodbav:"GSI1SK"`
+    GSI1PK string `dynamodbav:"GSI1PK"`
+    GSI1SK string `dynamodbav:"GSI1SK"`
 }
 ```
 
@@ -560,7 +560,7 @@ similar methods:
 
 - We log a debug message indicating that we are reading a user with the provided ID.
 - We call `client.GetItem` to query the database for the user with the provided ID. We pass in the
-  table name and a map of the primary key and sort key to query the database. This Method returns a single item from the database.
+  table name and a map of the primary key and sort key to query the database. This method returns a single item from the database.
   - The primary key is a combination of the string `USER#` and the user's ID.
     - The primary key is used to uniquely identify the item in the table.
   - The sort key is also a combination of the string `USER#` and the user's ID.
@@ -579,7 +579,7 @@ way that you feel most comfortable with. With that being said, here are a couple
 in mind:
 - Remember, the `BlogContent` table has been designed using single table design. This means that the database hase a single table and that table contains multiple entity types, in this case, users and blog posts. 
 - The `BlogContent` table has also been designed in such a way that you should not need to use a `scan` action to complete any of the service methods. This is because scanning is an expensive operation that we want to avoid if possible when working in the real world.
-- Inorder to discover how best to retive the data for each method, you may need to look at the `BlogContent` table in the NoSQL Workbench to see how the data is structured. You can also build operations in the NoSQL Workbench to test how to retrieve the data you need.
+- Inorder to discover how best to     retrieve the data for each method, you may need to look at the `BlogContent` table in the NoSQL Workbench to see how the data is structured. You can also build operations in the NoSQL Workbench to test how to retrieve the data you need.
 - The `BlogContent` table has been built with two separate Global Secondary Indexes (GSI) to facilitate different access patterns. You will need to use some of these indexes to complete some of the service methods. You can read more about GSIs [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html).
 
 If you get stuck, here are some helpful resources on working with `aws-sdk-go-v2`:
@@ -992,7 +992,7 @@ declaration is extremely popular in Go.
 
 ## Hiding the read user response type
 
-A general best practice with developing API's is to define request and response models separate from
+A general best practice with developing APIs is to define request and response models separate from
 our domain models. These models will be unexported and only used in the `handlers` package. This 
 means a little bit of extra mapping, but keeps our domain model from leaking
 out of our API. This also gives us some flexibility in the event a request or response doesn't
@@ -1268,14 +1268,10 @@ func TestHandleHealthCheck(t *testing.T) {
             HandleHealthCheck(logger)(rec, req)
 
             // Check the status code
-            if rec.Code != tc.wantStatus {
-                t.Errorf("want status %d, got %d", tc.wantStatus, rec.Code)
-            }
+            assert.Equal(t, tc.wantStatus, rec.Code, "status code mismatch")
 
             // Check the body
-            if strings.Trim(rec.Body.String(), "\n") != tc.wantBody {
-                t.Errorf("want body %q, got %q", tc.wantBody, rec.Body.String())
-            }
+            assert.JSONEq(t, tc.wantBody, strings.Trim(rec.Body.String(), "\n"), "body mismatch")
         })
     }
 }
@@ -1355,92 +1351,104 @@ With our mocks creates, we can start our test! Create a new file `internal/servi
 func TestUsersService_ReadUser(t *testing.T) {
     testcases := map[string]struct {
         mockCalled     bool
-        mockInputArgs  []driver.Value
-        mockOutput     *sqlmock.Rows
-        mockError      error
-        input          uint64
+        mockInput      []any
+        mockOutput     []any
+        input          uuid.UUID
         expectedOutput models.User
         expectedError  error
     }{
         "happy path": {
-            mockCalled:    true,
-            mockInputArgs: []driver.Value{1},
-            mockOutput: sqlmock.NewRows([]string{"id", "name", "email", "password"}).
-                AddRow(1, "john", "john@me.com", "password123!"),
-            mockError: nil,
-            input:     1,
+            mockCalled: true,
+            mockInput: []any{
+                context.TODO(),
+                &dynamodb.GetItemInput{
+                    TableName: aws.String("BlogContent"),
+                    Key: map[string]types.AttributeValue{
+                        "PK": &types.AttributeValueMemberS{
+                            Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+                        },
+                        "SK": &types.AttributeValueMemberS{
+                            Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+                        },
+                    },
+                },
+            },
+            mockOutput: []any{
+                &dynamodb.GetItemOutput{
+                    Item: map[string]types.AttributeValue{
+                        "Email":    &types.AttributeValueMemberS{Value: "testUser@example.com"},
+                        "GSI1PK":   &types.AttributeValueMemberS{Value: "USER"},
+                        "UserID":   &types.AttributeValueMemberS{Value: "d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+                        "GSI1SK":   &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+                        "SK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+                        "PK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+                        "Name":     &types.AttributeValueMemberS{Value: "Test User"},
+                        "Password": &types.AttributeValueMemberS{Value: "Test Password"},
+                    },
+                },
+                nil,
+            },
+            input: uuid.MustParse("d2eddb69-f92f-694d-450d-e7cdb6decce3"),
             expectedOutput: models.User{
-                ID:       1,
-                Name:     "john",
-                Email:    "john@me.com",
-                Password: "password123!",
+                DynamoDBBase: models.DynamoDBBase{
+                    PK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+                    SK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+                    GSI1PK: "USER",
+                    GSI1SK: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+                },
+                ID:       models.UUID{UUID: uuid.MustParse("d2eddb69-f92f-694d-450d-e7cdb6decce3")},
+                Name:     "Test User",
+                Email:    "testUser@example.com",
+                Password: "Test Password",
             },
             expectedError: nil,
         },
     }
     for name, tc := range testcases {
         t.Run(name, func(t *testing.T) {
-            db, mock, err := sqlmock.New()
-            if err != nil {
-                t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-            }
-            defer db.Close()
-
+            mockClient := new(mock.DynamoClient)
             logger := slog.Default()
-			
+
             if tc.mockCalled {
-                mock.
-                    ExpectQuery(regexp.QuoteMeta(`
-                        SELECT id,
-                               name,
-                               email,
-                               password
-                        FROM users
-                        WHERE id = $1::int
-                    `)).
-                    WithArgs(tc.mockInputArgs...).
-                    WillReturnRows(tc.mockOutput).
-                    WillReturnError(tc.mockError)
+                mockClient.
+                    On("GetItem", tc.mockInput...).
+                    Return(tc.mockOutput...).
+                    Once()
             }
 
-            userService := NewUsersService(logger, db)
+            userService := UsersService{
+                logger: logger,
+                client: mockClient,
+            }
 
             output, err := userService.ReadUser(context.TODO(), tc.input)
-            if err != tc.expectedError {
-                t.Errorf("expected no error, got %v", err)
-            }
-            if output != tc.expectedOutput {
-                t.Errorf("expected %v, got %v", tc.expectedOutput, output)
-            }
+
+            assert.Equal(t, tc.expectedError, err, "errors did not match")
+            assert.Equal(t, tc.expectedOutput, output, "returned data does not match")
 
             if tc.mockCalled {
-                if err = mock.ExpectationsWereMet(); err != nil {
-                    t.Errorf("there were unfulfilled expectations: %s", err)
-                }
+                mockClient.AssertExpectations(t)
+            } else {
+                mockClient.AssertNotCalled(t, "GetItem")
             }
         })
     }
 }
 ```
 
-There is a lot going on here, so lets break it down!
-- When we create our test case struct, we define some fields that will control our mock and its behavior. These fields include: 
+There is a lot going on here, so let's break it down:
+- When we create our test case struct, we define some fields that will control our mock and its behavior. These fields include:
   - `mockCalled`, to determine if the mock should be called
-  - `mockInputArgs`, to define the input arguments to the mock
-  - `mockOutput`, to define the output of the mock, 
-  - `mockError`, to define the error the mock should return
-- Inside of the test body, we create a new mock database connection and defer its closure. We can use the `mock` to define the expected behavior of the database query and tell the mocked database what to return.
+  - `mockInput`, to define the input arguments to the mock
+  - `mockOutput`, to define the output of the mock
+- Inside the test body, we create a new mock database connection. We can use the mock to define the expected behavior of the database query and tell the mocked database what to return.
 - We then use the test case values to determine if the mock should be called, and if it should, we define the expected behavior of the mock.
-  - Note the use of `regexp.QuoteMeta` to escape the query string. This is important to ensure that the query string is matched correctly by `sqlmock`. 
 - We then create a new instance of the `UsersService` and call the `ReadUser` method with the mocked database connection.
 - Finally, we check the output and error of the method to ensure they match the expected values.
 
-Now that we have defined a basic test for the happy path, try adding other test cases to the test to test other scenarios? What if the database query fails? What if the user does not exist? 
+Now that we have defined a basic test for the happy path, try adding other test cases to the test to test other scenarios? What if the database call fails? What if the user does not exist? 
 
-The testing patterns shown here should be enough for you to be able to fully test the rest of the application. With that being said, here are a couple of other resources you might find helpful:
-- [testify](https://github.com/stretchr/testify): A popular testing library that provides a lot of helpful utilities for writing tests such as assertions and mocks.
-- [mockery](https://vektra.github.io/mockery/latest/): A tool for generating mocks for interfaces and builds on `testify`.
-- [Go Wiki: TableDrivenTests](https://go.dev/wiki/TableDrivenTests): A great resource for learning about table-driven tests in Go.
+The testing patterns shown here should be enough for you to be able to fully test the rest of the application. 
 
 ## Next Steps
 
