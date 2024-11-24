@@ -6,7 +6,7 @@ For this assignment, you will be creating a Blog API. This API will be responsib
 
 ## Database Overview
 
-As we have already seen, the database contains three different entity types: Users, Blogs, and Comments. As was also mentioned, we are following AWS best practices which means that we are using a single table to hold all three different entity types.
+As we have already seen, the database contains three different entity types: Users, Blogs, and Comments. As was also already mentioned, we are following AWS best practices which means that we are using a single table to hold all three different entity types.
 
 Bellow is an Entity-Relationship Diagram (ERD) that represents the relationship between the three different entity types. Note that these are not the actual tables in the database, but rather a visual representation of the relationships between the entity types.
 
@@ -36,15 +36,18 @@ erDiagram
     }
 ```
 
-The Users entity represents standard information relating to a user, including their name, email, and password. For the user's password, you are expected to use standard encryption to store their passwords within the database.
+The `Users` entity represents standard information relating to a user, including their name, email, and password. For the user's password, you are expected to use standard encryption to store their passwords within the database.
 
-The Blogs entity represents pertinent information relating to a blog, including the title, score, and created date of the blog. The Blogs entity also contains an author's id that referencing the id of the user who created the blog. This association represents a one-to-many association between Users entities and the Blogs entities.
+The `Blogs` entity represents pertinent information relating to a blog, including the title, score, and created date of the blog. The `Blogs` entity also contains an author's id that referencing the id of the user who created the blog. This association represents a one-to-many association between Users entities and the `Blogs` entities.
 
-The final entity, Comments, represents the comments that users have written for the blogs. Because users can write many comments for different blogs and blogs can have many comments written by different users, the Comments entity represents an intermediate entity for the many-to-many relationship between users and blogs. As such, the Comments entity uses a composite key (the user's id and the blog's id) to distinguish records in this table. For the sake of simplicity, it is assumed that a user can leave only one comment per blog. Other information stored for each comment includes the date and time the comment was written, and the message wrote by the user on the comment.
+The final entity, `Comments`, represents the comments that users have written for the blogs. Because users can write many comments for different blogs and blogs can have many comments written by different users, the `Comments` entity represents an intermediate entity for the many-to-many relationship between `Users` and `Blogs`. As such, the `Comments` entity uses a composite key (the user's id and the blog's id) to distinguish entities. Other information stored for each comment includes the date and time the comment was written, and the message wrote by the user on the comment.
+
+> [!NOTE]
+> For the sake of simplicity, it is assumed that a user can leave only one comment per blog.
 
 We recommend that you use NoSQL Workbench to explore the data in the database and to practice making queries. Items to explore include: 
 - How the different entities are stores
-- How the existing Global Secondary Indexes (GSI) are used
+- How the existing Global Secondary Index (GSI) is used
 - How partition and sort keys have been overloaded
 You can find instructions on how to connect to the database using NoSQL Workbench in the [Technical Setup](./1-Technical-Setup.md) document.
 
@@ -57,7 +60,7 @@ Also note that as you continue with this tech challenge, you are expected to use
 
 ## API Structure
 
-Your project will need to define 3 groups of endpoints, one for each of the tables (users, blogs, and comments). Each group will need to include handlers for `get all`, `get by id`, `update by id`, `add`, and `delete` actions. Additionally, there are bonus endpoints that you can challenge yourself to complete alongside those required. All endpoints should include error handling and input validation, when necessary. Your project should also have a single main entrypoint to run the project.
+Your project will need to define 3 groups of endpoints, one for each of the entities (`Users`, `Blogs`, and `Comments`). Each group will need to include handlers for `get all`, `get by id`, `update by id`, `add`, and `delete` actions. Additionally, there are bonus endpoints that you can challenge yourself to complete alongside those required. All endpoints should include error handling and input validation, when necessary. Your project should also have a single main entrypoint to run the project.
 
 Below are the details for the required and optional endpoints
 
