@@ -136,6 +136,7 @@ DYNAMODB_ENDPOINT=http://localhost:8000
 HOST=localhost
 PORT=8080
 LOG_LEVEL=DEBUG
+SHUTDOWN_TIMEOUT=5
 ```
 
 If you need to add other environment variables, you can do so by adding them to this file.
@@ -153,10 +154,11 @@ type Configuration struct {
 	Host           string     `env:"HOST,required"`
 	Port           string     `env:"PORT,required"`
 	LogLevel       slog.Level `env:"LOG_LEVEL,required"`
+	ShutdownTimout int        `env:"SHUTDOWN_TIMEOUT,required"`
 }
 ```
 
-Note how we use struct tags to define the environment variable name and whether it is required for each field on the struct.  
+Note how we use struct tags to define the environment variable name and whether it is required for each field on the struct. 
 
 Now, add the following function to the file below the `Configuration` struct:
 
@@ -169,7 +171,7 @@ func New() (Configuration, error) {
 	// function without a .env file which will by default load values directly
 	// from system environment variables.
 	_ = godotenv.Load()
-	 // Once values have been loaded into system env vars, parse those into our
+	// Once values have been loaded into system env vars, parse those into our
 	// configuration struct and validate them returning any errors.
 	cfg, err := env.ParseAs[Config]()
 	if err != nil {
@@ -199,7 +201,7 @@ going to steal a pattern popularized by Matt Ryer to do exactly that.
 First, in `cmd/api/main.go` we're going to add the `run` function below the `main()` function definition. It should contain logic to call `config.New()` and initialize a logger. The `run()` function will be responsible for initializing all our dependencies and starting our application:
 
 ```go
-func run(ctx context.Context) error {
+func run(ctx context.Context, w io.Writer, args []string) error {
 	// Load and validate environment configuration
 	cfg, err := config.New()
 	if err != nil {
@@ -208,7 +210,7 @@ func run(ctx context.Context) error {
     
 	// Create a structured logger, which will print logs in json format to the
 	// writer we specify.
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{
 		Level: cfg.LogLevel,
 	}))
 	
@@ -221,7 +223,7 @@ Next, we'll update `func main` to look like this:
 ```go
 func main() {
 	ctx := context.Background()
-	if err := run(ctx); err != nil {
+	if err := run(ctx, os.Stdout, os.Args); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "server encountered an error: %s\n", err)
 		os.Exit(1)
 	}
@@ -693,7 +695,7 @@ go func() {
 	logger.DebugContext(ctx, "Received SIGINT, shutting down server")
 
 	// Create a context with a timeout to allow the server to shut down gracefully
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(cfg.ShutdownTimout)*time.Second)
 	defer cancel()
 
 	// Shutdown the server. If an error occurs, send it to the error channel
@@ -720,6 +722,7 @@ select {
 case err = <-errChan:
 	return err
 case <-ctx.Done():
+    logger.InfoContext(ctx, "server shutdown complete")
 	return nil
 }
 ```
