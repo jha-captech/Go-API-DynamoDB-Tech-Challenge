@@ -8,7 +8,7 @@
     - [Configure the Connection to the Database](#configure-the-connection-to-the-database)
     - [Load and Validate the Environment Variables](#load-and-validate-environment-variables)
     - [Creating a `run` function to initialize dependencies](#creating-a-run-function-to-initialize-dependencies)
-    - [Connect to PostgreSQL](#connect-to-postgresql)
+    - [Connect to DynamoDB](#connect-to-dynamodb)
     - [Setting up User Model](#setting-up-user-model)
     - [Creating our User Service](#creating-our-user-service)
 - [Service Setup](#service-setup)
@@ -34,7 +34,7 @@
 ## Overview
 
 As previously mentioned, this challenge is centered around the use of the `net/http` library for
-developing APIs. Our web server will connect to a PostgreSQL database in the backend. This
+developing APIs. Our web server will connect to a DynamoDB instance in the backend. This
 walkthrough will consist of a step-by-step guide for creating the REST API for the `users` table in
 the database. By the end of the walkthrough, you will have endpoints capable of creating, reading,
 updating, and deleting from the `users` table.
@@ -183,7 +183,7 @@ The `New` naming convention is widely established in Go, and is used when we are
 instance of an object from a package that shares the same name. Such as a `Config` object being
 returned from a `config` package.
 
-Note that we are using an underscore `_` to discard any posable errors from `godotenv.Load()` since we don't really care if there is an error and wont be handling the error if one was returned. Explicitly discarding errors when you don't want to handle them is considered a best practice as it signals to others that you meant to do this instead of just having forgotten to handle it.
+Note that we are using an underscore `_` to discard any possible errors from `godotenv.Load()` since we don't really care if there is an error and won't be handling the error if one was returned. Explicitly discarding errors when you don't want to handle them is considered a best practice as it signals to others that you meant to do this instead of just having forgotten to handle it.
 
 ### Creating a `run` function to initialize dependencies
 
@@ -283,7 +283,7 @@ Tables:
 * BlogContent
 ```
 
-Congrats! You have managed to connect to your Postgres database from your application.
+Congrats! You have managed to connect to your DynamoDB instance from your application.
 
 > Note: Before we continue, you can remove the temporary code that lists all tables in the database.
 
@@ -565,7 +565,7 @@ similar methods:
     - The primary key is used to uniquely identify the item in the table.
   - The sort key is also a combination of the string `USER#` and the user's ID.
     - The sort key is used to sort items with the same primary key. In this case it is the same as the primary key, but this is not the case.
-- We check if the `result.Item` is `nil`, which means that the user was not found in the database. If this is the case, we return an sentinel error.
+- We check if the `result.Item` is `nil`, which means that the user was not found in the database. If this is the case, we return a sentinel error.
 - We unmarshal the results into a `models.User` struct using the `attributevalue.UnmarshalMap` method.
   - This method is used to convert a map of `types.AttributeValue` to a struct. It is used to convert the response from the database into a struct that we can use in our application.
 - We return the user or an error.
@@ -574,8 +574,8 @@ similar methods:
 
 Now that you've implemented the `ReadUser` method, go through an implement the other CRUD methods on the service struct.
 
-There are multiple ways that you can do this and you have the freedom to approach this in the 
-way that you feel most comfortable with. With that being said, here are a couple things to keep 
+There are multiple ways that you can do this, and you have the freedom to approach this in the 
+way that you feel most comfortable with. With that being said, here are a couple of things to keep 
 in mind:
 - Remember, the `BlogContent` table has been designed using single table design. This means that the database hase a single table and that table contains multiple entity types, in this case, users and blog posts. 
 - The `BlogContent` table has also been designed in such a way that you should not need to use a `scan` action to complete any of the service methods. This is because scanning is an expensive operation that we want to avoid if possible when working in the real world.
@@ -590,7 +590,7 @@ If you get stuck, here are some helpful resources on working with `aws-sdk-go-v2
 ## Server Setup
 
 Now that we have a user service that can interact with the database layer, we can set up our http
-server. Our server is comprised of two main components. Routes and handlers. Routes are a
+server. Our server comprises two main components. Routes and handlers. Routes are a
 combination of http method and path that we accept requests at. We'll start by defining a handler,
 then we'll attach it to a route, and finally we'll attach those routes to a server so we can invoke
 them.
@@ -721,11 +721,11 @@ case <-ctx.Done():
 }
 ```
 
-Lets talk about whats going on here:
+Let's talk about what's going on here:
 - First, we are initializing an instance of our `UserService` by passing the logger and database client to it.
 - next, we are creating a server mux, passing it to `AddRoutes()` to add routes, and then creating an instance of the `http.Server` struct that includes the address of our web server and our mux.
 - After that, we are setting up graceful shutdown logic. We do this by: 
-    - Starting a Go routine and the immediately blocking until we receive a cancellation signal across a channel. This lets us wait until the server is starting to shutdown before running any shutdown logic we need. 
+    - Starting a Go routine and the immediately blocking until we receive a cancellation signal across a channel. This lets us wait until the server is starting to shut down before running any shutdown logic we need. 
     - After the signal is received, we create a cancellation context so that when we call `httpServer.Shutdown`, it can only run for a fixed amount of time. 
     - After all the shutdown logic has run, we call `done()` which will unblock our `run()` function and let us finally exit.
 - Next, we start our server by calling httpServer.ListenAndServe() and checking any errors that are returned.
@@ -751,7 +751,7 @@ We often will need to modify or inspect requests and responses before or after t
 First, in `internal/middleware/middleware.go`, add the following line:
 
 ```go
-// Middleware is a function that wraps an http.Handler.
+// Middleware is a function that wraps a http.Handler.
 type Middleware func(next http.Handler) http.Handler
 ```
 
@@ -842,7 +842,7 @@ In `internal/routes/routes.go` add the following comments above the `AddRoutes` 
 //
 // @title						Blog Service API
 // @version						1.0
-// @description					Practice Go API using the Standard Library and Postgres
+// @description					Practice Go API using the Standard Library and DynamoDB
 // @termsOfService				http://swagger.io/terms/
 // @contact.name				API Support
 // @contact.url					http://www.swagger.io/support
@@ -877,7 +877,7 @@ following comments above the `HandleReadUser` function:
 //	@Router			/users/{id}  				[GET]
 ```
 
-The above comments give swagger important information such as the path of the endpoint, requst
+The above comments give swagger important information such as the path of the endpoint, request
 parameters, request bodies, and response types. For more information about each annotation and
 additional annotations you will need,
 see [Swaggo Api Operation](https://github.com/swaggo/swag?tab=readme-ov-file#api-operation).
@@ -968,7 +968,7 @@ type userReader interface {
 The Go community encourages this style of interface declaration. The interface is defined at the
 point it's consumed, which allows us to narrow down the methods to only the single `ReadUser` method
 we need. This greatly simplifies testing by simplifying the mock we need to create. This also gives
-us additional type safety in that we've guaranteed that the handler for reading a user doesn't have
+us additional type safety in that we've guaranteed that the handler for reading a user does not have
 access to other functionality like deleting a user.
 
 Now that we've defined our interface we can inject it. Add an argument for the interface to the
@@ -1139,7 +1139,7 @@ models from the request body. Notice that `decodeValid` takes a generic that mus
 `validator` interface. To call the function ensure the model you're attempting to decode implements
 `validator`.
 
-To demonstrate how this works, let's add a request model for creating a user. We will only add a single validation rule now and you can add more rules later as needed. Inside the `request.go` file, add the following code:
+To demonstrate how this works, let's add a request model for creating a user. We will only add a single validation rule now, and you can add more rules later as needed. Inside the `request.go` file, add the following code:
 
 ```go
 // createUserRequest represents the input model for creating a user.
@@ -1188,7 +1188,7 @@ out [this YouTube video](https://www.youtube.com/watch?v=FjkSJ1iXKpg).
 
 ### Unit Testing in This Tech Challenge
 
-Unit testing is a required part of this tech challenge. There are not specific requirements for
+Unit testing is a required part of this tech challenge. There are no specific requirements for
 exactly how you must write your unit tests, but keep the following in mind as you go through the
 challenge:
 
@@ -1277,10 +1277,10 @@ func TestHandleHealthCheck(t *testing.T) {
 }
 ```
 
-Lets break down what is happening in this test:
+Let's break down what is happening in this test:
 - We are creating a map of test cases. Each test case has a name, and a struct with the expected status code and body.
-- We are then iterating over each test case and running a sub-test for each one.
-- In each sub-test we are creating a new request, response recorder, and logger.
+- We are then iterating over each test case and running a subtest for each one.
+- In each subtest we are creating a new request, response recorder, and logger.
 - We then call the handler with the logger and response recorder.
 - Finally, we check the status code and body of the response recorder to ensure they match the expected values.
 
@@ -1288,7 +1288,7 @@ Lets break down what is happening in this test:
 
 Now that we have looked at writing a unit test for a handler, lets look at writing a unit test for a service. For this example, we are going to write a unit test for the `ReadUser` method in the `UsersService` struct. This test will be a little more complex than the handler test, as we will need to make a mock for our DynamoDB client.
 
-To start off, lets add an interface for our database client to the `internal/services/users.go` file. For now we only need a `GetItem` method, but as you use more methods from the client you can add them to the interface.
+To start off, lets add an interface for our database client to the `internal/services/users.go` file. For now, we only need a `GetItem` method, but as you use more methods from the client you can add them to the interface.
 
 ```go
 type dynamoClient interface {
