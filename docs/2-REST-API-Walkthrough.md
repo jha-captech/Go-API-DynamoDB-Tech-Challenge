@@ -331,17 +331,16 @@ type DynamoDBBase struct {
 }
 ```
 
-We will be embedding this struct in our other models so that these values are available to all of 
-them. We will also talk more about what these values mean later
+`PK` and `SK` are the primary key and sort key for the item in the table. `GSI1PK` and `GSI1SK` are the primary key and sort key for the first Global Secondary Index (GSI) on the table. We will be embedding this struct in our other models so that these values are available to all of them. We will also talk more about what these values mean later.
 
 ---
 
-Let's take a step back for a second. If we look at our database using the NoSQL Workbench, we can see 
+Let's take another step back for a second. If we look at our database using the NoSQL Workbench, we can see 
 that we have several ID columns for our different entity types. These IDs are UUIDs. In Go, we will 
 often use the `github.com/google/uuid` package to work with UUIDs. This package provides a `UUID` 
 struct that can be used to represent a UUID. However, this will introduce a new problem for us here. 
 While the `uuid` package implements the `Marshaler` and `Unmarshaler` interfaces from multiple other 
-package, it does not implement the `Marshaler` and `Unmarshaler` interfaces from the 
+package, such as the `json` package, it does not implement the `Marshaler` and `Unmarshaler` interfaces from the 
 `aws-sdk-go-v2/feature/dynamodb/attributevalue` package. This means that we will need to create our 
 own UUID type that extends the `uuid` package and also implement these interfaces ourselves in order 
 to use UUIDs in our models.
@@ -358,16 +357,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// UUID is a custom type that wraps a UUID and implements the Unmarshaler
-// interface from the
-// `github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue` package. It
-// can be used to unmarshal a UUID from a DynamoDB attribute value.
+// UUID is a custom type that wraps an uuid.UUID and implements the Marshaler 
+// and Unmarshaler interface from the
+// `github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue` package.
 type UUID struct {
 	uuid.UUID
 }
 
-// UnmarshalDynamoDBAttributeValue unmarshals a UUID from a DynamoDB attribute
-// value. It implements the attributevalue.Marshaler interface.
+// UnmarshalDynamoDBAttributeValue unmarshals a UUID from a DynamoDB 
+// types.AttributeValue. It implements the attributevalue.Marshaler interface.
 func (u *UUID) UnmarshalDynamoDBAttributeValue(av types.AttributeValue) error {
 	s, ok := av.(*types.AttributeValueMemberS)
 	if !ok {
@@ -383,8 +381,8 @@ func (u *UUID) UnmarshalDynamoDBAttributeValue(av types.AttributeValue) error {
 	return nil
 }
 
-// MarshalDynamoDBAttributeValue marshals a UUID into a DynamoDB attribute value.
-// It implements the attributevalue.Marshaler interface.
+// MarshalDynamoDBAttributeValue marshals a UUID into a DynamoDB 
+// types.AttributeValue. It implements the attributevalue.Marshaler interface.
 func (u *UUID) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
 	return &types.AttributeValueMemberS{Value: u.UUID.String()}, nil
 }
@@ -393,23 +391,23 @@ func (u *UUID) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
 Let's go over what this code does:
 - We define a new type called `UUID` that embeds the `uuid.UUID` struct from `github.com/google/uuid`. 
 - Next we implicitly implement the `Unmarshaler` interface from the `aws-sdk-go-v2/feature/dynamodb/attributevalue` package with the `UnmarshalDynamoDBAttributeValue` method. This method is used to convert a `types.AttributeValue` to a `UUID` when unmarshalling data from the database.
-- Next we implement the `Marshaler` interface from the `aws-sdk-go-v2/feature/dynamodb/attributevalue` with the `MarshalDynamoDBAttributeValue` method package. This method is used to convert a `UUID` to a `types.AttributeValue` when marshalling data to be added to the database.
+- Next we aslo implicitly implement the `Marshaler` interface from the `aws-sdk-go-v2/feature/dynamodb/attributevalue` with the `MarshalDynamoDBAttributeValue` method package. This method is used to convert a `UUID` to a `types.AttributeValue` when marshalling data to be added to the database.
 
 This custom type that extends the `uuid` package and implements the `Marshaler` and `Unmarshaler` interfaces from the `aws-sdk-go-v2/feature/dynamodb/attributevalue` package will allow us to use UUIDs in our models and get proper marshaling and unmarshalling.
 
 ---
 
-Before we go on, we need to take a quick detour to talk about table design in DynamoDB. DynamoDB
+Before we go on, we need to take another quick detour to talk about table design in DynamoDB. DynamoDB
 is a NoSQL database, which means it doesn't use tables, rows, and columns like a traditional SQL
 database. Instead, it uses a key-value and document-based data model.
 
 In DynamoDB, a table is a collection of items, and each item is a collection of attributes. Each
 item is identified by a primary key, which is a unique attribute than can either be a single
-partition key or composite key made up of partition key and sort key. In our case, we are using
+partition key or composite key made up of partition key and sort key. 
+
+In our case, we are using
 a single table design, which means that we are storing multiple entity types in a single table.
-To accomplish this, we are using a composite primary key and a composite sort key. The primary
-key, named `PK`, is a combination of the string `USER#` and the user's ID. The primary key is used to
-uniquely identify the item in the table. The sort key, named `SK`, is also a combination of the string
+To accomplish this, we are using a composite primary key made of a partition key and sort key. The partition key , named `PK`, is a combination of the string `USER#` and the user's ID. The sort key, named `SK`, is also a combination of the string
 `USER#` and the user's ID. The sort key is used to sort items with the same primary key. In this
 case, it is the same as the primary key, but this is not always the case for the other entity
 types in the table. We will look at this more later. For now, we will just be working with the
@@ -442,7 +440,7 @@ Last, lets delete the `models.go` file in the models package as we won't be usin
 
 ### Creating our User Service
 
-Now that we have talked about our data model, we can start creating our service layer. Our 
+Now that we have defined our `User` data model, we can start creating our service layer. Our 
 service layer is where all of our application logic (including database access) will live. It's 
 important to remember that there are many ways to structure Go applications. We're following a 
 very basic layered architecture that places most of our logic and dependencies in a services 
@@ -502,7 +500,7 @@ func (s *UsersService) ListUsers(ctx context.Context, id uint64) ([]models.User,
 We've stubbed out a basic `UsersService` capable of performing CRUD on our User model. Next we'll
 flesh out the `ReadUser` method.
 
-First, add this sentinel error to the top of the file:
+First, lets add this sentinel error to the top of the file:
 
 ```go
 var ErrNotFound = fmt.Errorf("item not found")
@@ -513,13 +511,13 @@ We can use sentinel errors (also called named errors) to represent specific erro
 > [!CAUTION]
 > Sentinel errors can be an important pattern to use in Go, but they can also be very easily overused. Be sure to use them judiciously and only when they make sense. A good rule of thumb is to only use them when you need to communicate specific error conditions across API boundaries.
 
-Next, update the `ReadUser` method to below:
+Next, update the `ReadUser` method to match the code below:
 
 ```go
 // ReadUser attempts to read a user from the database using the provided id. A
 // fully hydrated models.User or error is returned.
 func (s *UsersService) ReadUser(ctx context.Context, id uuid.UUID) (models.User, error) {
-	s.logger.DebugContext(ctx, "Reading user", "id", id)
+	s.logger.InfoContext(ctx, "Reading user", "id", id)
 
 	// get item from DynamoDB by PK and SK
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -561,7 +559,7 @@ func (s *UsersService) ReadUser(ctx context.Context, id uuid.UUID) (models.User,
 Let's quickly walk through the structure of this method, as it will serve as a template for other
 similar methods:
 
-- We log a debug message indicating that we are reading a user with the provided ID.
+- We log a message indicating that we are reading a user with the provided ID.
 - We call `client.GetItem` to query the database for the user with the provided ID. We pass in the
   table name and a map of the primary key and sort key to query the database. This method returns a single item from the database.
   - The primary key is a combination of the string `USER#` and the user's ID.
@@ -582,8 +580,8 @@ way that you feel most comfortable with. With that being said, here are a couple
 in mind:
 - Remember, the `BlogContent` table has been designed using single table design. This means that the database hase a single table and that table contains multiple entity types, in this case, users and blog posts. 
 - The `BlogContent` table has also been designed in such a way that you should not need to use a `scan` action to complete any of the service methods. This is because scanning is an expensive operation that we want to avoid if possible when working in the real world.
-- Inorder to discover how best to     retrieve the data for each method, you may need to look at the `BlogContent` table in the NoSQL Workbench to see how the data is structured. You can also build operations in the NoSQL Workbench to test how to retrieve the data you need.
-- The `BlogContent` table has been built with two separate Global Secondary Indexes (GSI) to facilitate different access patterns. You will need to use some of these indexes to complete some of the service methods. You can read more about GSIs [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html).
+- Inorder to discover how best to retrieve the data for each method, you weill need to look at the `BlogContent` table in the NoSQL Workbench to see how the data is structured. You can also build operations in the NoSQL Workbench to test how to retrieve the data you need.
+- The `BlogContent` table has been built with a separate Global Secondary Index (GSI) to facilitate different access patterns. You will need to use this index to complete some of the service methods. You can read more about GSIs [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html).
 
 If you get stuck, here are some helpful resources on working with `aws-sdk-go-v2`:
 - [Amazon DynamoDB Examples Using the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/using-dynamodb-with-go-sdk.html)
@@ -626,7 +624,7 @@ func HandleReadUser(logger *slog.Logger) http.Handler {
 		}
 
 		// Write the response body, simply echo the ID back out
-		_, err := w.Write([]byte(id))
+		_, err := w.Write([]byte(fmt.spintf("User ID: %s", id)))
 		if err != nil {
 			// Handle error if response writing fails
 			logger.ErrorContext(r.Context(), "failed to write response", slog.String("error", err.Error()))
@@ -637,7 +635,7 @@ func HandleReadUser(logger *slog.Logger) http.Handler {
 ```
 
 Notice that we're not defining a handler directly, rather we've defined a function that returns a
-handler. This allows us to pass dependencies into the outer function and access them in our handler.
+handler. This allows us to pass dependencies (such as the logger) into the outer function and access them in our handler.
 
 ### Route setup
 
@@ -656,10 +654,10 @@ func AddRoutes(mux *http.ServeMux, logger *slog.Logger, usersService *services.U
 
 ### Adding a server to main.go
 
-With our service and handler defined we can add our server in `main.go`
+With our service, handler, and route defined we can add our server in `main.go`
 
-Modify the `run` function in `main.go` to include the following below the dependencies we've
-initialized along with code to create and run our server along with graceful shutdown logic:
+Modify the `run` function in `main.go` to include the following code below the dependencies we've
+initialized:
 
 ```go
 // Create a new users service
@@ -727,7 +725,7 @@ case <-ctx.Done():
 
 Let's talk about what's going on here:
 - First, we are initializing an instance of our `UserService` by passing the logger and database client to it.
-- next, we are creating a server mux, passing it to `AddRoutes()` to add routes, and then creating an instance of the `http.Server` struct that includes the address of our web server and our mux.
+- Next, we are creating a server mux, passing it to `AddRoutes()` to add routes, and then creating an instance of the `http.Server` struct that includes the address of our web server and our mux.
 - After that, we are setting up graceful shutdown logic. We do this by: 
     - Starting a Go routine and the immediately blocking until we receive a cancellation signal across a channel. This lets us wait until the server is starting to shut down before running any shutdown logic we need. 
     - After the signal is received, we create a cancellation context so that when we call `httpServer.Shutdown`, it can only run for a fixed amount of time. 
@@ -740,9 +738,10 @@ If we run the application we should now see logs indicating our server is runnin
 address. Try hitting our user endpoint! You can do this by using a tool like [postman](https://www.postman.com/), a VSCode extension like [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client), or using `CURL` from the command line with the following command: 
 
 ```bash
-curl -X GET localhost:8080/api/users/1
+curl -X GET localhost:8080/api/users/3e728140-ec5a-4a09-9699-632abc0589bf
 ```
-> Note, we are passing the ID of a user as the last value in the path. Try changing this value and see what happens!
+> [!NOTE] 
+> We are passing the ID of a user as the last value in the path. Try changing this value and see what happens!
 
 Now try closing the application with `ctrl + C`. You should see some log messages in the terminal telling you that your graceful shutdown logic is running!
 
@@ -878,7 +877,7 @@ following comments above the `HandleReadUser` function:
 //	@Failure		400				{object}	string
 //	@Failure		404				{object}	string
 //	@Failure		500				{object}	string
-//	@Router			/users/{id}  				[GET]
+//	@Router			/users/{id}  	[GET]
 ```
 
 The above comments give swagger important information such as the path of the endpoint, request
@@ -996,7 +995,7 @@ declaration is extremely popular in Go.
 
 ## Hiding the read user response type
 
-A general best practice with developing APIs is to define request and response models separate from
+A general best practice when developing APIs is to define request and response models separate from
 our domain models. These models will be unexported and only used in the `handlers` package. This 
 means a little bit of extra mapping, but keeps our domain model from leaking
 out of our API. This also gives us some flexibility in the event a request or response doesn't
@@ -1005,7 +1004,7 @@ cleanly map to a domain model.
 Creat a new file `internal/handlers/response.go` and add the following type definition:
 
 ```go
-// userResponse represents the the output model for a user.
+// userResponse represents the output model for a user.
 type userResponse struct {
 	ID       uuid.UUID `json:"id"`
 	Name     string    `json:"name"`
@@ -1321,12 +1320,12 @@ func NewUsersService(logger *slog.Logger, client dynamoClient) *UsersService {
 
 With the interface added, try running your application to see if everything still works (it should).
 
-Next, lets work on setting up `mockery` to auto generate mocks for our interface. You can find documentation on `mockery` [here](https://vektra.github.io/mockery/latest/) You should have already installed `mockery` as part of the setup for this challenge. As such, we can move forward with generating the mock. To do this, we will need a `.mockey.yaml` file in the root of our project. Create that file and add the following code:
+Next, lets work on setting up `mockery` to auto generate mocks for our interface. You can find documentation on `mockery` [here](https://vektra.github.io/mockery/latest/). You should have already installed `mockery` as part of the setup for this challenge. As such, we can move forward with generating the mock. To do this, we will need a `.mockey.yaml` file in the root of our project. Create that file and add the following code:
 
 ```yaml
 with-expecter: true
 packages:
-  github.com/[your-name]/blog/internal/services:
+  github.com/[name]/blog/internal/services:
     config:
       filename: "{{.InterfaceName | snakecase}}.go"
       dir: "{{.InterfaceDir}}/mock"
@@ -1337,9 +1336,13 @@ packages:
       dynamoClient:
 ```
 
-> Note: Replace `[your-name]` with your GitHub username.
+> Note: Replace `[name]` with your GitHub username.
 
 Let's break down what is happening in this file:
+- We are setting `with-expecter` to `true`. This will generate an `EXPECT()` methods for our mock so we can test expectations.
+- We are defining the package that contains our interface. In this case, it is `github.com/[name]/blog/internal/services`.
+- We are defining the configuration for our interface. This includes the filename, directory, mockname, outpkg, and inpackage.
+- We are defining the interface we want to generate a mock for. In this case, it is `dynamoClient`. You if you had other interfaces you wanted to generate mocks for, you would add them here.
 
 With the `.mockery.yaml` file in place, we can now generate the mock for our `dynamoClient` interface. To do this, run the following command:
 
@@ -1445,7 +1448,7 @@ There is a lot going on here, so let's break it down:
   - `mockCalled`, to determine if the mock should be called
   - `mockInput`, to define the input arguments to the mock
   - `mockOutput`, to define the output of the mock
-- Inside the test body, we create a new mock database connection. We can use the mock to define the expected behavior of the database query and tell the mocked database what to return.
+- Inside the test body, we create a new mock instance from our generated mock.
 - We then use the test case values to determine if the mock should be called, and if it should, we define the expected behavior of the mock.
 - We then create a new instance of the `UsersService` and call the `ReadUser` method with the mocked database connection.
 - Finally, we check the output and error of the method to ensure they match the expected values.
