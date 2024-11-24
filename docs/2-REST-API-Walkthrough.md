@@ -424,10 +424,10 @@ package models
 
 type User struct {
     DynamoDBBase
-    ID       UUID   `dynamodbav:"UserID"`
-    Name     string `dynamodbav:"Name"`
-    Email    string `dynamodbav:"Email"`
-    Password string `dynamodbav:"Password"`
+    ID       UUID   `dynamodbav:"user_id"`
+    Name     string `dynamodbav:"name"`
+    Email    string `dynamodbav:"email"`
+    Password string `dynamodbav:"password"`
 }
 ```
 Note how we are embedding the `DynamoDBBase` struct in the `User`struct. This will allow us to 
@@ -1376,14 +1376,14 @@ func TestUsersService_ReadUser(t *testing.T) {
             mockOutput: []any{
                 &dynamodb.GetItemOutput{
                     Item: map[string]types.AttributeValue{
-                        "Email":    &types.AttributeValueMemberS{Value: "testUser@example.com"},
+                        "email":    &types.AttributeValueMemberS{Value: "testUser@example.com"},
                         "GSI1PK":   &types.AttributeValueMemberS{Value: "USER"},
-                        "UserID":   &types.AttributeValueMemberS{Value: "d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+                        "user_id":  &types.AttributeValueMemberS{Value: "d2eddb69-f92f-694d-450d-e7cdb6decce3"},
                         "GSI1SK":   &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
                         "SK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
                         "PK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
-                        "Name":     &types.AttributeValueMemberS{Value: "Test User"},
-                        "Password": &types.AttributeValueMemberS{Value: "Test Password"},
+                        "name":     &types.AttributeValueMemberS{Value: "Test User"},
+                        "password": &types.AttributeValueMemberS{Value: "Test Password"},
                     },
                 },
                 nil,

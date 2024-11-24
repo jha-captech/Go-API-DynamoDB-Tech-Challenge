@@ -14,11 +14,11 @@ swag-init:
 mock-gen:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Generating mocks..."
 	@$(MAKE) LOG MSG_TYPE=debug LOG_MESSAGE="Delete existing mocks"
-	@find ./internal -type -d | grep -v ^.*mock$$ | xargs rm -rf
+	@find ./internal -d | grep ^.*mock$$ | xargs rm -rf
 	@mockery
 	@$(MAKE) LOG MSG_TYPE=success LOG_MESSAGE="Mocks generated"
 
-.PHONY: start-web-app 
+.PHONY: start-web-app
 start-web-app:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Starting web app..."
 	@$(MAKE) start-database
@@ -49,7 +49,7 @@ seed-database:
 .PHONE: reset-database
 reset-database:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Resetting database..."
-	@/cd ./dynamodb_seed && /bin/bash ./reset_dynamodb.sh
+	@cd ./dynamodb_seed && /bin/bash ./reset_dynamodb.sh
 
 .PHONY: run-unit-test
 run-unit-test:
