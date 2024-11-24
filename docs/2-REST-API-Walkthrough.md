@@ -102,12 +102,12 @@ application to our database.
 
 ## Database Setup
 
-We will first begin by setting up the database layer of our application.
+We will first begin by setting up the database connection for our application.
 
 ### Configure the Connection to the Database
 
-In order for the project to be able to connect to the DynamoDB database, we first need to handle
-configuration. During setup, we created a `.env` file to store environment variables. The values needed to connect to the database should already be there.
+In order for the project to be able to connect to the DynamoDB instance we created and started during setup, we first need to handle
+configuration. We will create a `.env` file to store environment variables. The values needed to connect to the database should already be there.
 
 ### Load and Validate Environment Variables
 
@@ -115,11 +115,11 @@ To handle loading environment variables into the application, we will utilize th
 `env`](https://github.com/caarlos0/env) package from `caarlos0` as well as the [
 `godotenv`](https://github.com/joho/godotenv) package. You should have already installed these packages during setup.
 
-`env` is used to parse values from our system environment variables and map them to properties on a
+The `env` package is used to parse values from our system environment variables and map them to properties on a
 struct we've defined. `env` can also be used to perform validation on environment variables such as
 ensuring they are defined and don't contain an empty value.
 
-`godotenv` is used to load values from `.env` files into system environment variables. This allows
+The `godotenv` package is used to load values from `.env` files into system environment variables. This allows
 us to define these values in a `.env` file for local development.
 
 We first need to create a `.env` file. To do
@@ -132,11 +132,13 @@ cp .env.local .env
 If you look inside the `.env` file, you should see the following environment variables. These will be used by our application:
 
 ```
-DYNAMO_ENDPOINT=http://localhost:8000
+DYNAMODB_ENDPOINT=http://localhost:8000
 HOST=localhost
 PORT=8080
 LOG_LEVEL=DEBUG
 ```
+
+If you need to add other environment variables, you can do so by adding them to this file.
 
 Now, find the `internal/configuration/configuration.go` file. This is where we'll define the struct to contain our
 environment variables.
@@ -147,14 +149,16 @@ Add the struct definition below to the file below the existing package definitio
 // Config holds the application configuration settings. The configuration is loaded from
 // environment variables.
 type Configuration struct {
-	DynamoEndpoint string     `env:"DYNAMO_ENDPOINT,required"`
+	DynamoEndpoint string     `env:"DYNAMODB_ENDPOINT,required"`
 	Host           string     `env:"HOST,required"`
 	Port           string     `env:"PORT,required"`
 	LogLevel       slog.Level `env:"LOG_LEVEL,required"`
 }
 ```
 
-Now, add the following function to the file below the `Config` struct:
+Note how we use struct tags to define the environment variable name and whether it is required for each field on the struct.  
+
+Now, add the following function to the file below the `Configuration` struct:
 
 ```go
 // New loads Configuration from environment variables and a .env file, and returns a
