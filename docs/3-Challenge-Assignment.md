@@ -16,7 +16,33 @@ The final table, Comments, represents the comments that users have written for t
 
 The diagram for the database and the relationships between each table are shown below in the following picture.
 
-![Database Schema Diagram](./Images/DatabaseSchema.png)
+```mermaid
+erDiagram
+    Users ||--o{ Blogs : user_id
+    Users ||--o{ Comments : user_id
+    Users {
+        uuid user_id PK
+        string name
+        string email
+        string password
+    }
+    Blogs ||--o{ Comments : blog_id
+    Blogs {
+        uuid blog_id PK
+        uuid user_id FK
+        string title
+        float score
+        date created_date
+    }
+    Comments {
+        uuid user_id FK
+        uuid blog_id FK
+        uuid comment_id PK
+        date created_date
+        string message
+    }
+%%    User ||--o{ Comment : "Writes"
+```
 
 ## API Structure
 
