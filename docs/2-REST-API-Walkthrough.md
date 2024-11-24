@@ -527,7 +527,7 @@ func (s *UsersService) ReadUser(ctx context.Context, id uuid.UUID) (models.User,
 				Value: fmt.Sprintf("USER#%s", id.String()),
 			},
 			"SK": &types.AttributeValueMemberS{
-				Value: fmt.Sprintf("USER#%s", id.String()),
+				Value: "PROFILE",
 			},
 		},
 	})
@@ -1375,7 +1375,7 @@ func TestUsersService_ReadUser(t *testing.T) {
 							Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
 						},
 						"SK": &types.AttributeValueMemberS{
-							Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+							Value: "PROFILE",
 						},
 					},
 				},
@@ -1387,7 +1387,7 @@ func TestUsersService_ReadUser(t *testing.T) {
 						"GSI1PK":   &types.AttributeValueMemberS{Value: "USER"},
 						"user_id":  &types.AttributeValueMemberS{Value: "d2eddb69-f92f-694d-450d-e7cdb6decce3"},
 						"GSI1SK":   &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
-						"SK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+						"SK":       &types.AttributeValueMemberS{Value: "PROFILE"},
 						"PK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
 						"name":	    &types.AttributeValueMemberS{Value: "Test User"},
 						"password": &types.AttributeValueMemberS{Value: "Test Password"},
@@ -1399,7 +1399,7 @@ func TestUsersService_ReadUser(t *testing.T) {
 			expectedOutput: models.User{
 				DynamoDBBase: models.DynamoDBBase{
 					PK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
-					SK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+					SK:     "PROFILE",
 					GSI1PK: "USER",
 					GSI1SK: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
 				},
