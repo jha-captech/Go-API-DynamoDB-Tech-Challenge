@@ -145,10 +145,10 @@ Add the struct definition below to the file below the existing package definitio
 // Config holds the application configuration settings. The configuration is loaded from
 // environment variables.
 type Configuration struct {
-    DynamoEndpoint string     `env:"DYNAMO_ENDPOINT,required"`
-    Host           string     `env:"HOST,required"`
-    Port           string     `env:"PORT,required"`
-    LogLevel       slog.Level `env:"LOG_LEVEL,required"`
+	DynamoEndpoint string     `env:"DYNAMO_ENDPOINT,required"`
+	Host           string     `env:"HOST,required"`
+	Port           string     `env:"PORT,required"`
+	LogLevel       slog.Level `env:"LOG_LEVEL,required"`
 }
 ```
 
@@ -158,20 +158,18 @@ Now, add the following function to the file below the `Config` struct:
 // New loads Configuration from environment variables and a .env file, and returns a
 // Config struct or error.
 func New() (Configuration, error) {
-    // Load values from a .env file and add them to system environment variables.
-    // Discard errors coming from this function. This allows us to call this
-    // function without a .env file which will by default load values directly
-    // from system environment variables.
-    _ = godotenv.Load()
-
-    // Once values have been loaded into system env vars, parse those into our
-    // configuration struct and validate them returning any errors.
-    cfg, err := env.ParseAs[Config]()
-    if err != nil {
-        return Config{}, fmt.Errorf("[in configuration.New] failed to parse configuration: %w", err)
-    }
-
-    return cfg, nil
+	// Load values from a .env file and add them to system environment variables.
+	// Discard errors coming from this function. This allows us to call this
+	// function without a .env file which will by default load values directly
+	// from system environment variables.
+	_ = godotenv.Load()
+	 // Once values have been loaded into system env vars, parse those into our
+	// configuration struct and validate them returning any errors.
+	cfg, err := env.ParseAs[Config]()
+	if err != nil {
+		return Config{}, fmt.Errorf("[in configuration.New] failed to parse configuration: %w", err)
+	}
+	 return cfg, nil
 }
 ```
 
@@ -196,19 +194,19 @@ First, in `cmd/api/main.go` we're going to add the `run` function below the `mai
 
 ```go
 func run(ctx context.Context) error {
-    // Load and validate environment configuration
-    cfg, err := config.New()
-    if err != nil {
-        return fmt.Errorf("[in main.run] failed to load configuration: %w", err)
-    }
+	// Load and validate environment configuration
+	cfg, err := config.New()
+	if err != nil {
+		return fmt.Errorf("[in main.run] failed to load configuration: %w", err)
+	}
     
-    // Create a structured logger, which will print logs in json format to the
-    // writer we specify.
-    logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-        Level: cfg.LogLevel,
-    }))
-
-    return nil
+	// Create a structured logger, which will print logs in json format to the
+	// writer we specify.
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: cfg.LogLevel,
+	}))
+	
+	return nil
 }
 ```
 
@@ -216,11 +214,11 @@ Next, we'll update `func main` to look like this:
 
 ```go
 func main() {
-    ctx := context.Background()
-    if err := run(ctx); err != nil {
-        _, _ = fmt.Fprintf(os.Stderr, "server encountered an error: %s\n", err)
-        os.Exit(1)
-    }
+	ctx := context.Background()
+	if err := run(ctx); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "server encountered an error: %s\n", err)
+		os.Exit(1)
+	}
 }
 ```
 
@@ -247,26 +245,25 @@ First, in `cmd/api/main.go`, lets update `run`. Since connection to the database
 logger.InfoContext(ctx, "connecting to DynamoDB")
 awscfg, err := config.LoadDefaultConfig(ctx)
 if err != nil {
-    return fmt.Errorf("[in main.run] failed to load configuration: %w", err)
+	return fmt.Errorf("[in main.run] failed to load configuration: %w", err)
 }
 
 client := dynamodb.NewFromConfig(awscfg, func(options *dynamodb.Options) {
-    options.BaseEndpoint = aws.String(cfg.DynamoEndpoint)
+	options.BaseEndpoint = aws.String(cfg.DynamoEndpoint)
 })
 
 // list all tables in db (we will delete this later)
 result, err := client.ListTables(ctx, &dynamodb.ListTablesInput{})
 if err != nil {
-    return fmt.Errorf("[in main.run] failed to list tables: %w", err)
+	return fmt.Errorf("[in main.run] failed to list tables: %w", err)
 }
 
 fmt.Println("Tables:")
 for _, tableName := range result.TableNames {
-    fmt.Printf("* %s\n", tableName)
+	fmt.Printf("* %s\n", tableName)
 }
 
 return nil
-                                             
 ```
 Note that we have added some temporary code to print out all tables inside our DynamoDB instance. We will delete this in a few minutes, but for now, it will help us verify that we are able to connect to the database.
 
@@ -321,10 +318,10 @@ will need to interact with the database. In the `internal/models` package, creat
 package models
 
 type DynamoDBBase struct {
-    PK     string `dynamodbav:"PK"`
-    SK     string `dynamodbav:"SK"`
-    GSI1PK string `dynamodbav:"GSI1PK"`
-    GSI1SK string `dynamodbav:"GSI1SK"`
+	PK     string `dynamodbav:"PK"`
+	SK     string `dynamodbav:"SK"`
+	GSI1PK string `dynamodbav:"GSI1PK"`
+	GSI1SK string `dynamodbav:"GSI1SK"`
 }
 ```
 
@@ -349,10 +346,10 @@ To do this, create a new file called `uuid.go` in the `internal/models` package 
 package models
 
 import (
-    "fmt"
+	"fmt"
 
-    "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-    "github.com/google/uuid"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 )
 
 // UUID is a custom type that wraps a UUID and implements the Unmarshaler
@@ -360,30 +357,30 @@ import (
 // `github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue` package. It
 // can be used to unmarshal a UUID from a DynamoDB attribute value.
 type UUID struct {
-    uuid.UUID
+	uuid.UUID
 }
 
 // UnmarshalDynamoDBAttributeValue unmarshals a UUID from a DynamoDB attribute
 // value. It implements the attributevalue.Marshaler interface.
 func (u *UUID) UnmarshalDynamoDBAttributeValue(av types.AttributeValue) error {
-    s, ok := av.(*types.AttributeValueMemberS)
-    if !ok {
-        return fmt.Errorf("expected AttributeValueMemberS, got %T", av)
-    }
+	s, ok := av.(*types.AttributeValueMemberS)
+	if !ok {
+		return fmt.Errorf("expected AttributeValueMemberS, got %T", av)
+	}
 
-    id, err := uuid.Parse(s.Value)
-    if err != nil {
-        return err
-    }
+	id, err := uuid.Parse(s.Value)
+	if err != nil {
+		return err
+	}
 
-    *u = UUID{UUID: id}
-    return nil
+	*u = UUID{UUID: id}
+	return nil
 }
 
 // MarshalDynamoDBAttributeValue marshals a UUID into a DynamoDB attribute value.
 // It implements the attributevalue.Marshaler interface.
 func (u *UUID) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
-    return &types.AttributeValueMemberS{Value: u.UUID.String()}, nil
+	return &types.AttributeValueMemberS{Value: u.UUID.String()}, nil
 }
 ```
 
@@ -423,11 +420,11 @@ called `user.go` and add the following code:
 package models
 
 type User struct {
-    DynamoDBBase
-    ID       UUID   `dynamodbav:"user_id"`
-    Name     string `dynamodbav:"name"`
-    Email    string `dynamodbav:"email"`
-    Password string `dynamodbav:"password"`
+	DynamoDBBase
+	ID       UUID   `dynamodbav:"user_id"`
+	Name     string `dynamodbav:"name"`
+	Email    string `dynamodbav:"email"`
+	Password string `dynamodbav:"password"`
 }
 ```
 Note how we are embedding the `DynamoDBBase` struct in the `User`struct. This will allow us to 
@@ -453,46 +450,46 @@ Start by adding the following struct, constructor function, and methods to the
 // UsersService is a service capable of performing CRUD operations for
 // models.User models.
 type UsersService struct {
-    logger *slog.Logger
-    client *dynamodb.Client
+	logger *slog.Logger
+	client *dynamodb.Client
 }
 
 // NewUsersService creates a new UsersService and returns a pointer to it.
 func NewUsersService(logger *slog.Logger, client *dynamodb.Client) *UsersService {
-    return &UsersService{
-        logger: logger,
-        client: client,
-    }
+	return &UsersService{
+		logger: logger,
+		client: client,
+	}
 }
 // CreateUser attempts to create the provided user, returning a fully hydrated
 // models.User or an error.
 func (s *UsersService) CreateUser(ctx context.Context, user models.User) (models.User, error) {
-    return models.User{}, nil
+	return models.User{}, nil
 }
 
 // ReadUser attempts to read a user from the database using the provided id. A
 // fully hydrated models.User or error is returned.
 func (s *UsersService) ReadUser(ctx context.Context, id uint64) (models.User, error) {
-    return models.User{}, nil
+	return models.User{}, nil
 }
 
 // UpdateUser attempts to perform an update of the user with the provided id,
 // updating, it to reflect the properties on the provided patch object. A
 // models.User or an error.
 func (s *UsersService) UpdateUser(ctx context.Context, id uint64, patch models.User) (models.User, error) {
-    return models.User{}, nil
+	return models.User{}, nil
 }
 
 // DeleteUser attempts to delete the user with the provided id. An error is
 // returned if the delete fails.
 func (s *UsersService) DeleteUser(ctx context.Context, id uint64) error {
-    return nil
+	return nil
 }
 
 // ListUsers attempts to list all users in the database. A slice of models.User
 // or an error is returned.
 func (s *UsersService) ListUsers(ctx context.Context, id uint64) ([]models.User, error) {
-    return []models.User{}, nil
+	return []models.User{}, nil
 }
 ```
 
@@ -516,42 +513,42 @@ Next, update the `ReadUser` method to below:
 // ReadUser attempts to read a user from the database using the provided id. A
 // fully hydrated models.User or error is returned.
 func (s *UsersService) ReadUser(ctx context.Context, id uuid.UUID) (models.User, error) {
-    s.logger.DebugContext(ctx, "Reading user", "id", id)
+	s.logger.DebugContext(ctx, "Reading user", "id", id)
 
-    // get item from DynamoDB by PK and SK
-    result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
-        TableName: aws.String("BlogContent"),
-        Key: map[string]types.AttributeValue{
-            "PK": &types.AttributeValueMemberS{
-                Value: fmt.Sprintf("USER#%s", id.String()),
-            },
-            "SK": &types.AttributeValueMemberS{
-                Value: fmt.Sprintf("USER#%s", id.String()),
-            },
-        },
-    })
-    if err != nil {
-        return models.User{}, fmt.Errorf(
-            "[in main.UsersService.ReadUser] failed to get item: %w",
-            err,
-        )
-    }
+	// get item from DynamoDB by PK and SK
+	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String("BlogContent"),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{
+				Value: fmt.Sprintf("USER#%s", id.String()),
+			},
+			"SK": &types.AttributeValueMemberS{
+				Value: fmt.Sprintf("USER#%s", id.String()),
+			},
+		},
+	})
+	if err != nil {
+		return models.User{}, fmt.Errorf(
+			"[in main.UsersService.ReadUser] failed to get item: %w",
+			err,
+		)
+	}
 
-    // handle item not found
-    if result.Item == nil {
-        return models.User{}, ErrNotFound
-    }
+	// handle item not found
+	if result.Item == nil {
+		return models.User{}, ErrNotFound
+	}
 
-    // Unmarshal the results into the models.User struct
-    var user models.User
-    if err = attributevalue.UnmarshalMap(result.Item, &user); err != nil {
-        return models.User{}, fmt.Errorf(
-            "[in main.UsersService.ReadUser] failed to unmarshal result: %w",
-            err,
-        )
-    }
+	// Unmarshal the results into the models.User struct
+	var user models.User
+	if err = attributevalue.UnmarshalMap(result.Item, &user); err != nil {
+		return models.User{}, fmt.Errorf(
+			"[in main.UsersService.ReadUser] failed to unmarshal result: %w",
+			err,
+		)
+	}
 
-    return user, nil
+	return user, nil
 }
 ```
 
@@ -609,27 +606,27 @@ from below:
 
 ```go
 func HandleReadUser(logger *slog.Logger) http.Handler {
-    return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
-        ctx := r.Context()
-        logger.InfoContext(ctx, "handling read user request")
+	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger.InfoContext(ctx, "handling read user request")
 
-        // Set the status code to 200 OK
-        w.WriteHeader(http.StatusOK)
+		// Set the status code to 200 OK
+		w.WriteHeader(http.StatusOK)
 
-        id := r.PathValue("id")
-        if id == "" {
-            http.Error(w, "not found", http.StatusNotFound)
-            return
-        }
+		id := r.PathValue("id")
+		if id == "" {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
 
-        // Write the response body, simply echo the ID back out
-        _, err := w.Write([]byte(id))
-        if err != nil {
-            // Handle error if response writing fails
-            logger.ErrorContext(r.Context(), "failed to write response", slog.String("error", err.Error()))
-            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-        }
-    })
+		// Write the response body, simply echo the ID back out
+		_, err := w.Write([]byte(id))
+		if err != nil {
+			// Handle error if response writing fails
+			logger.ErrorContext(r.Context(), "failed to write response", slog.String("error", err.Error()))
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	})
 }
 ```
 
@@ -646,8 +643,8 @@ In the `internal/routes/routes.go` file we'll define the function below:
 
 ```go
 func AddRoutes(mux *http.ServeMux, logger *slog.Logger, usersService *services.UsersService) {
-    // Read a user
-    mux.Handle("GET /api/users/{id}", handlers.HandleReadUser(logger))
+	// Read a user
+	mux.Handle("GET /api/users/{id}", handlers.HandleReadUser(logger))
 }
 ```
 
@@ -670,8 +667,8 @@ routes.AddRoutes(mux, logger, usersService)
 
 // Create a new http server with our mux as the handler
 httpServer := &http.Server{
-    Addr:    net.JoinHostPort(cfg.Host, cfg.Port),
-    Handler: mux,
+	Addr:	net.JoinHostPort(cfg.Host, cfg.Port),
+	Handler: mux,
 }
 
 errChan := make(chan error)
@@ -682,25 +679,25 @@ defer done()
 
 // Handle graceful shutdown with go routine on SIGINT
 go func() {
-    // create a channel to listen for SIGINT and then block until it is received
-    sig := make(chan os.Signal, 1)
-    signal.Notify(sig, os.Interrupt)
-    <-sig
+	// create a channel to listen for SIGINT and then block until it is received
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	<-sig
 
-    logger.DebugContext(ctx, "Received SIGINT, shutting down server")
+	logger.DebugContext(ctx, "Received SIGINT, shutting down server")
 
-    // Create a context with a timeout to allow the server to shut down gracefully
-    ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	// Create a context with a timeout to allow the server to shut down gracefully
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-    // Shutdown the server. If an error occurs, send it to the error channel
-    if err = httpServer.Shutdown(ctx); err != nil {
-        errChan <- fmt.Errorf("[in main.run] failed to shutdown http server: %w", err)
-        return
-    }
+	// Shutdown the server. If an error occurs, send it to the error channel
+	if err = httpServer.Shutdown(ctx); err != nil {
+		errChan <- fmt.Errorf("[in main.run] failed to shutdown http server: %w", err)
+		return
+	}
 
-    // Close the idle connections channel, unblocking `run()`
-    done()
+	// Close the idle connections channel, unblocking `run()`
+	done()
 }()
 
 // Start the http server
@@ -709,15 +706,15 @@ go func() {
 // http.ErrServerClosed error and we don't care about that error.
 logger.InfoContext(ctx, "listening", slog.String("address", httpServer.Addr))
 if err = httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-    return fmt.Errorf("[in main.run] failed to listen and serve: %w", err)
+	return fmt.Errorf("[in main.run] failed to listen and serve: %w", err)
 }
 
 // block until the server is shut down or an error occurs
 select {
 case err = <-errChan:
-    return err
+	return err
 case <-ctx.Done():
-    return nil
+	return nil
 }
 ```
 
@@ -813,8 +810,8 @@ Finally, update the `httpServer` definition to use the `wrappedMux` instead of t
 ```go
 // Create a new http server with our mux as the handler
 httpServer := &http.Server{
-    Addr:    net.JoinHostPort(cfg.Host, cfg.Port),
-    Handler: wrappedMux,
+	Addr:    net.JoinHostPort(cfg.Host, cfg.Port),
+	Handler: wrappedMux,
 }
 ```
 
@@ -906,10 +903,10 @@ Next, lets update our call to `AddRoutes()` in `main.run()` to include the base 
 ```go
 // Add our routes to the mux
 routes.AddRoutes(
-    mux,
-    logger,
-    usersService,
-    fmt.Sprintf("http://%s:%s", cfg.Host, cfg.Port),
+	mux,
+	logger,
+	usersService,
+	fmt.Sprintf("http://%s:%s", cfg.Host, cfg.Port),
 )
 ```
 
@@ -961,7 +958,7 @@ In `internal/handlers/read_user.go` add the following interface definition to th
 // userReader represents a type capable of reading a user from storage and
 // returning it or an error.
 type userReader interface {
-    ReadUser(ctx context.Context, id uuid.UUID) (models.User, error)
+	ReadUser(ctx context.Context, id uuid.UUID) (models.User, error)
 }
 ```
 
@@ -976,7 +973,7 @@ Now that we've defined our interface we can inject it. Add an argument for the i
 
 ```go
 func HandleReadUser(logger *slog.Logger, userReader userReader) http.Handler {
-    // ... handler functionality
+	// ... handler functionality
 }
 ```
 
@@ -1003,10 +1000,10 @@ Creat a new file `internal/handlers/response.go` and add the following type defi
 ```go
 // userResponse represents the the output model for a user.
 type userResponse struct {
-    ID       uuid.UUID `json:"id"`
-    Name     string    `json:"name"`
-    Email    string    `json:"email"`
-    Password string    `json:"password"`
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
 }
 ```
 
@@ -1017,67 +1014,67 @@ map it into a response. Update the `http.HandlerFunc` returned from `HandleReadU
 following:
 ```go
 func HandleReadUser(logger *slog.Logger, userReader userReader) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        ctx := r.Context()
-        logger.DebugContext(ctx, "Handling read user request")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger.DebugContext(ctx, "Handling read user request")
 
-        // Read id from path parameters
-        idStr := r.PathValue("id")
+		// Read id from path parameters
+		idStr := r.PathValue("id")
 
-        // Convert the ID from string to a UUID
-        id, err := uuid.Parse(idStr)
-        if err != nil {
-            logger.ErrorContext(
-                ctx,
-                "failed to parse id from url",
-                slog.String("id", idStr),
-                slog.String("error", err.Error()),
-            )
+		// Convert the ID from string to a UUID
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			logger.ErrorContext(
+				ctx,
+				"failed to parse id from url",
+				slog.String("id", idStr),
+				slog.String("error", err.Error()),
+			)
 
-            http.Error(w, "Invalid ID", http.StatusBadRequest)
-            return
-        }
+			http.Error(w, "Invalid ID", http.StatusBadRequest)
+			return
+		}
 
-        // Read the user
-        if err != nil {
-            switch {
-            case errors.Is(err, services.ErrNotFound):
-                logger.ErrorContext(ctx, "user not found")
-                http.Error(w, "User not found", http.StatusNotFound)
+		// Read the user
+		if err != nil {
+			switch {
+			case errors.Is(err, services.ErrNotFound):
+				logger.ErrorContext(ctx, "user not found")
+				http.Error(w, "User not found", http.StatusNotFound)
 				
-            default:
-                logger.ErrorContext(
-                    ctx,
-                    "failed to read user",
-                    slog.String("error", err.Error()),
-                )
-                http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-            }
+			default:
+				logger.ErrorContext(
+					ctx,
+					"failed to read user",
+					slog.String("error", err.Error()),
+				)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
 
-            return
-        }
+			return
+		}
 
-        // Convert our models.User domain model into a response model.
-        response := userResponse{
-            ID:       user.ID.UUID,
-            Name:     user.Name,
-            Email:    user.Email,
-            Password: user.Password,
-        }
+		// Convert our models.User domain model into a response model.
+		response := userResponse{
+			ID:       user.ID.UUID,
+			Name:     user.Name,
+			Email:    user.Email,
+			Password: user.Password,
+		}
 
-        // Encode the response model as JSON
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        if err = json.NewEncoder(w).Encode(response); err != nil {
-            logger.ErrorContext(
-                ctx,
-                "failed to encode response",
-                slog.String("error", err.Error()),
-            )
+		// Encode the response model as JSON
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err = json.NewEncoder(w).Encode(response); err != nil {
+			logger.ErrorContext(
+				ctx,
+				"failed to encode response",
+				slog.String("error", err.Error()),
+			)
 
-            http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-        }
-    })
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	})
 }
 ````
 Let's walk through the changes we made:
@@ -1111,26 +1108,26 @@ package handlers
 
 // validator is an object that can be validated.
 type validator interface {
-    // Valid checks the object and returns any
-    // problems. If len(problems) == 0 then
-    // the object is valid.
-    Valid(ctx context.Context) (problems map[string]string)
+	// Valid checks the object and returns any
+	// problems. If len(problems) == 0 then
+	// the object is valid.
+	Valid(ctx context.Context) (problems map[string]string)
 }
 
 // decodeValid decodes a model from a http request and performs validation
 // on it.
 func decodeValid[T validator](ctx context.Context, r *http.Request) (T, map[string]string, error) {
-    var v T
+	var v T
   
-    if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-        return v, nil, fmt.Errorf("decode json: %w", err)
-    }
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		return v, nil, fmt.Errorf("decode json: %w", err)
+	}
   
-    if problems := v.valid(ctx); len(problems) > 0 {
-        return v, problems, fmt.Errorf("invalid %T: %d problems", v, len(problems))
-    }
+	if problems := v.valid(ctx); len(problems) > 0 {
+		return v, problems, fmt.Errorf("invalid %T: %d problems", v, len(problems))
+	}
   
-    return v, nil, nil
+	return v, nil, nil
 }
 ```
 
@@ -1144,21 +1141,21 @@ To demonstrate how this works, let's add a request model for creating a user. We
 ```go
 // createUserRequest represents the input model for creating a user.
 type createUserRequest struct {
-    Name     string `json:"name"`
-    Email    string `json:"email"`
-    Password string `json:"password"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // valid checks the createUserRequest for any problems.
 func (r createUserRequest) valid(ctx context.Context) map[string]string {
 problems := make(map[string]string)
 
-    // check that name is not blank
-    if r.Name == "" {
-        problems["name"] = "name is required"
-    }
+	// check that name is not blank
+	if r.Name == "" {
+		problems["name"] = "name is required"
+	}
 
-    return problems
+	return problems
 }
 ```
 
@@ -1221,13 +1218,13 @@ type healthResponse struct {
 //	@Success		200		{object}	healthResponse
 //	@Router			/health	[GET]
 func HandleHealthCheck(logger *slog.Logger) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        logger.InfoContext(r.Context(), "health check called")
-        
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        _ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
-    }
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.InfoContext(r.Context(), "health check called")
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(healthResponse{Status: "ok"})
+	}
 }
 ```
 
@@ -1244,36 +1241,36 @@ Next, lets write a unit test for this handler. Create a new file `internal/handl
 
 ```go
 func TestHandleHealthCheck(t *testing.T) {
-    tests := map[string]struct {
-        wantStatus int
-        wantBody   string
-    }{
-        "happy path": {
-            wantStatus: 200,
-            wantBody:   `{"status":"ok"}`,
-        },
-    }
-    for name, tc := range tests {
-        t.Run(name, func(t *testing.T) {
-            // Create a new request
-            req := httptest.NewRequest("GET", "/health", nil)
+	tests := map[string]struct {
+		wantStatus int
+		wantBody   string
+	}{
+		"happy path": {
+			wantStatus: 200,
+			wantBody:   `{"status":"ok"}`,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			// Create a new request
+			req := httptest.NewRequest("GET", "/health", nil)
 
-            // Create a new response recorder
-            rec := httptest.NewRecorder()
+			// Create a new response recorder
+			rec := httptest.NewRecorder()
 
-            // Create a new logger
-            logger := slog.Default()
+			// Create a new logger
+			logger := slog.Default()
 
-            // Call the handler
-            HandleHealthCheck(logger)(rec, req)
+			// Call the handler
+			HandleHealthCheck(logger)(rec, req)
 
-            // Check the status code
-            assert.Equal(t, tc.wantStatus, rec.Code, "status code mismatch")
+			// Check the status code
+			assert.Equal(t, tc.wantStatus, rec.Code, "status code mismatch")
 
-            // Check the body
-            assert.JSONEq(t, tc.wantBody, strings.Trim(rec.Body.String(), "\n"), "body mismatch")
-        })
-    }
+			// Check the body
+			assert.JSONEq(t, tc.wantBody, strings.Trim(rec.Body.String(), "\n"), "body mismatch")
+		})
+	}
 }
 ```
 
@@ -1292,7 +1289,7 @@ To start off, lets add an interface for our database client to the `internal/ser
 
 ```go
 type dynamoClient interface {
-    GetItem(ctx context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
+	GetItem(ctx context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
 }
 ```
 
@@ -1302,16 +1299,16 @@ Next, lets update our `UsersService` struct and our constructor to take the data
 // UsersService is a service capable of performing CRUD operations for
 // models.User models.
 type UsersService struct {
-    logger *slog.Logger
-    client dynamoClient
+	logger *slog.Logger
+	client dynamoClient
 }
 
 // NewUsersService creates a new UsersService and returns a pointer to it.
 func NewUsersService(logger *slog.Logger, client dynamoClient) *UsersService {
-    return &UsersService{
-        logger: logger,
-        client: client,
-    }
+	return &UsersService{
+		logger: logger,
+		client: client,
+	}
 }
 ```
 
@@ -1349,90 +1346,90 @@ With our mocks creates, we can start our test! Create a new file `internal/servi
 
 ```go
 func TestUsersService_ReadUser(t *testing.T) {
-    testcases := map[string]struct {
-        mockCalled     bool
-        mockInput      []any
-        mockOutput     []any
-        input          uuid.UUID
-        expectedOutput models.User
-        expectedError  error
-    }{
-        "happy path": {
-            mockCalled: true,
-            mockInput: []any{
-                context.TODO(),
-                &dynamodb.GetItemInput{
-                    TableName: aws.String("BlogContent"),
-                    Key: map[string]types.AttributeValue{
-                        "PK": &types.AttributeValueMemberS{
-                            Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
-                        },
-                        "SK": &types.AttributeValueMemberS{
-                            Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
-                        },
-                    },
-                },
-            },
-            mockOutput: []any{
-                &dynamodb.GetItemOutput{
-                    Item: map[string]types.AttributeValue{
-                        "email":    &types.AttributeValueMemberS{Value: "testUser@example.com"},
-                        "GSI1PK":   &types.AttributeValueMemberS{Value: "USER"},
-                        "user_id":  &types.AttributeValueMemberS{Value: "d2eddb69-f92f-694d-450d-e7cdb6decce3"},
-                        "GSI1SK":   &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
-                        "SK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
-                        "PK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
-                        "name":     &types.AttributeValueMemberS{Value: "Test User"},
-                        "password": &types.AttributeValueMemberS{Value: "Test Password"},
-                    },
-                },
-                nil,
-            },
-            input: uuid.MustParse("d2eddb69-f92f-694d-450d-e7cdb6decce3"),
-            expectedOutput: models.User{
-                DynamoDBBase: models.DynamoDBBase{
-                    PK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
-                    SK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
-                    GSI1PK: "USER",
-                    GSI1SK: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
-                },
-                ID:       models.UUID{UUID: uuid.MustParse("d2eddb69-f92f-694d-450d-e7cdb6decce3")},
-                Name:     "Test User",
-                Email:    "testUser@example.com",
-                Password: "Test Password",
-            },
-            expectedError: nil,
-        },
-    }
-    for name, tc := range testcases {
-        t.Run(name, func(t *testing.T) {
-            mockClient := new(mock.DynamoClient)
-            logger := slog.Default()
+	testcases := map[string]struct {
+		mockCalled	 bool
+		mockInput	  []any
+		mockOutput	 []any
+		input		  uuid.UUID
+		expectedOutput models.User
+		expectedError  error
+	}{
+		"happy path": {
+			mockCalled: true,
+			mockInput: []any{
+				context.TODO(),
+				&dynamodb.GetItemInput{
+					TableName: aws.String("BlogContent"),
+					Key: map[string]types.AttributeValue{
+						"PK": &types.AttributeValueMemberS{
+							Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+						},
+						"SK": &types.AttributeValueMemberS{
+							Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+						},
+					},
+				},
+			},
+			mockOutput: []any{
+				&dynamodb.GetItemOutput{
+					Item: map[string]types.AttributeValue{
+						"email":    &types.AttributeValueMemberS{Value: "testUser@example.com"},
+						"GSI1PK":   &types.AttributeValueMemberS{Value: "USER"},
+						"user_id":  &types.AttributeValueMemberS{Value: "d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+						"GSI1SK":   &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+						"SK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+						"PK":       &types.AttributeValueMemberS{Value: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3"},
+						"name":	    &types.AttributeValueMemberS{Value: "Test User"},
+						"password": &types.AttributeValueMemberS{Value: "Test Password"},
+					},
+				},
+				nil,
+			},
+			input: uuid.MustParse("d2eddb69-f92f-694d-450d-e7cdb6decce3"),
+			expectedOutput: models.User{
+				DynamoDBBase: models.DynamoDBBase{
+					PK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+					SK:     "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+					GSI1PK: "USER",
+					GSI1SK: "USER#d2eddb69-f92f-694d-450d-e7cdb6decce3",
+				},
+				ID:       models.UUID{UUID: uuid.MustParse("d2eddb69-f92f-694d-450d-e7cdb6decce3")},
+				Name:     "Test User",
+				Email:    "testUser@example.com",
+				Password: "Test Password",
+			},
+			expectedError: nil,
+		},
+	}
+	for name, tc := range testcases {
+		t.Run(name, func(t *testing.T) {
+			mockClient := new(mock.DynamoClient)
+			logger := slog.Default()
 
-            if tc.mockCalled {
-                mockClient.
-                    On("GetItem", tc.mockInput...).
-                    Return(tc.mockOutput...).
-                    Once()
-            }
+			if tc.mockCalled {
+				mockClient.
+					On("GetItem", tc.mockInput...).
+					Return(tc.mockOutput...).
+					Once()
+			}
 
-            userService := UsersService{
-                logger: logger,
-                client: mockClient,
-            }
+			userService := UsersService{
+				logger: logger,
+				client: mockClient,
+			}
 
-            output, err := userService.ReadUser(context.TODO(), tc.input)
+			output, err := userService.ReadUser(context.TODO(), tc.input)
 
-            assert.Equal(t, tc.expectedError, err, "errors did not match")
-            assert.Equal(t, tc.expectedOutput, output, "returned data does not match")
+			assert.Equal(t, tc.expectedError, err, "errors did not match")
+			assert.Equal(t, tc.expectedOutput, output, "returned data does not match")
 
-            if tc.mockCalled {
-                mockClient.AssertExpectations(t)
-            } else {
-                mockClient.AssertNotCalled(t, "GetItem")
-            }
-        })
-    }
+			if tc.mockCalled {
+				mockClient.AssertExpectations(t)
+			} else {
+				mockClient.AssertNotCalled(t, "GetItem")
+			}
+		})
+	}
 }
 ```
 
