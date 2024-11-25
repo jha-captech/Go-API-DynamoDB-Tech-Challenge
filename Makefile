@@ -2,10 +2,23 @@ SHELL := /bin/bash
 
 .PHONY: swag-init
 swag-init:
-	swag init -g internal/routes/routes.go --output "cmd/api/docs"
-	swag fmt
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Generating swagger docs..."
+	@swag init \
+		--generalInfo "./../../internal/routes/routes.go" \
+		--output "cmd/api/docs" \
+		--dir "./internal/handlers"
+	@swag fmt
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Swagger docs generated"
 
-.PHONY: start-web-app 
+.PHONY: mock-gen
+mock-gen:
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Generating mocks..."
+	@$(MAKE) LOG MSG_TYPE=debug LOG_MESSAGE="Delete existing mocks"
+	@find ./internal -d | grep ^.*mock$$ | xargs rm -rf
+	@mockery
+	@$(MAKE) LOG MSG_TYPE=success LOG_MESSAGE="Mocks generated"
+
+.PHONY: start-web-app
 start-web-app:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Starting web app..."
 	@$(MAKE) start-database
@@ -28,6 +41,17 @@ stop-database:
 	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Stopping database..."
 	@docker compose down
 
+.PHONY: seed-database
+seed-database:
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Seeding database..."
+	@cd ./dynamodb_seed && /bin/bash ./seed_dynamodb.sh
+
+.PHONE: reset-database
+reset-database:
+	@$(MAKE) LOG MSG_TYPE=info LOG_MESSAGE="Resetting database..."
+	@cd ./dynamodb_seed && /bin/bash ./reset_dynamodb.sh
+
+.PHONY: run-unit-test
 run-unit-test:
 	go test -cover ./internal/service ./internal/config ./internal/database ./internal/routes ./cmd/api
 

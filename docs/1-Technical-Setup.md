@@ -9,7 +9,7 @@ your local development environment (don't worry, we will walk you though this in
 - [homebrew](https://docs.brew.sh/)
 - [Go](https://go.dev/doc/install) version 1.22+
 - [Colima](https://github.com/abiosoft/colima)
-- [DBeaver](https://dbeaver.io/download/) (or a different database viewer)
+- [NoSQL Workbench for DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.settingup.html)
 - [VSCode](https://code.visualstudio.com/) (or a different IDE)
 
 ## Installing Requirements
@@ -86,8 +86,7 @@ colima start
 colima stop
 ```
 
-> ---
->
+> [!TIP]
 >  If you run into an error such as:
 >
 >
@@ -96,38 +95,27 @@ colima stop
 >
 > please reference this
 > [help article](https://github.com/abiosoft/colima/blob/main/docs/FAQ.md#cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-is-the-docker-daemon-running).
->
-> ---
 
-> ---
->
+
+> [!TIP]
 > If you run into an error such as:
->
+> 
 > `docker: 'compose' is not a docker command.`
+> 
+> try the following:
 >
-> add the following JSON to your `~/.docker/config.json file.`
-> ```json
-> "cliPluginsExtraDirs": [
->     "/opt/homebrew/lib/docker/cli-plugins"
-> ]
-> ```
->
-> ---
+> - Ensure that the following directory exists: `~/.docker/cli-plugins`
+> - Create a symlink to the docker-compose plugin by running the following command:
+>  ```bash
+>  ln -s /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
+>  ```
 
-### DBeaver (or a different database viewer)
+### NoSQL Workbench for DynamoDB 
 
-DBeaver is a free database viewer that we can use to interact with our database using a GUI. There
-are other tools that can be used instead, but DBeaver is a free option that we can install with
-homebrew.
+NoSQL Workbench for DynamoDB is an AWS tool for designing and managing DynamoDB tables. You can install it by following the instructions [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.settingup.html).
 
-DBeaver can be installed by running the following commands:
-
-```bash
-# install DBeaver with homebrew
-brew install --cask dbeaver-community
-```
-
-> if you have issues with DBeaver, another good option you can try is [Beekeeper Studio](https://www.beekeeperstudio.io/)
+> [!TIP]
+> We recommend manually downloading the installer rather than using the command line instructions. This should prevent any issues with permission errors.
 
 ### VSCode
 
@@ -147,8 +135,7 @@ After installing Visual Studio Code, you should head to the Extensions tab and i
 extensions\*:
 
 - [Go](https://marketplace.visualstudio.com/items?itemName=golang.Go)
-- [PostgreSQL](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-postgresql)
-
+  
 Other useful VS Code extensions include:
 
 - [ENV](https://marketplace.visualstudio.com/items?itemName=IronGeek.vscode-env)
@@ -158,46 +145,51 @@ Other useful VS Code extensions include:
 ## Repository Setup
 
 Create your own repository using the `Use this template` in the top right of the webpage. Make
-yourself the owner, and give the repository the same name as the template (Go-API-Postgres-Tech-Challenge).
+yourself the owner, and give the repository the same name as the template (
+Go-API-DynamoDB-Tech-Challenge).
 Once your repository is cloned locally, you are all set to move on to the next step.
 
 ## Database Setup
 
-To reduce developer friction, we have provided a docker-compose file that will create a PostgreSQL
-databse instance for you. To start this container, we first need to create a `.env` file. To do
-this, running the following command to make a copy of the `.env.local` file:
-
-```bash
-# copy the .env.local file to .env
-cp .env.local .env
-```
-
-Next you can modify the username and password in the `.env` file if you would like to change it from
-the default. We have already added the `.env` file to the `.gitignore` file so that it will not be
-pushed to the repository.
-
-To start the database, run the following command:
+To reduce developer friction, we have provided a docker-compose file that will create a locally running DynamoDB
+ instance for you. To start the database, run the following command:
 
 ```bash
 # start the database
 docker compose up
 ```
 
-Now that the database is running, we can connect to it using DBeaver.
+Now that the database is running, we can seed it with data. To do this, run the following command:
 
-- First, open DBeaver and add a new connection, specifying PostgreSQL as the database type. Next,
-  make sure that the host, port, database, and credentials match the values in the `.env` file.
+```bash
+# seed the database
+make seed-database
+```
 
-  > ---
-  >
-  > NOTE: If this is your first time using DBeaver, it may require you to download a JDBC driver to
-  > continue. Just follow the steps provided to download the necessary driver to continue.
-  >
-  > ---
+> [!TIP]
+> If you need to reset your database and reseed it with default data, you can do so by running the following command:
+> ```bash
+> make reset-database && make seed-database
+> ```
 
-- Once you have connected to the database, confirm you can see the `comments` database and the
-  tables
-  `blogs` and `users`.
+Now that the database is running and seeded with data, we can connect to it using DBeaver.
+
+- First, open NoSQL Workbench and select `Operation Builder` from the side menu.:
+    ![workbench.01.png](Images/nosql_workbench/workbench.01.png)
+  
+- Next, click `+ Add connection`:
+    ![workbench.02.png](Images/nosql_workbench/workbench.02.png)
+  
+- In the `Ad a new database connection` popup, select `DynamoDB Local` and then fill out the connection details as shown bellow and click `BlogConnect`:
+    ![workbench.03.png](Images/nosql_workbench/workbench.03.png)
+
+- You should now see a new connection in the `Operation Builder`! Click on `open`:
+    ![workbench.04.png](Images/nosql_workbench/workbench.04.png)
+
+- You should now see the `Operation builder` view. To see the data in the database, click on the table name `Content` in the left hand menu:
+    ![workbench.05.png](Images/nosql_workbench/workbench.05.png)
+  
+Congratulations! You have connected your local DynamoDB instance to NoSQL Workbench and can now use the workbench to explore data and practice making queries.
 
 ## Create Go Module and Install Necessary Libraries
 
@@ -205,7 +197,7 @@ To create your Go project, open a terminal in the root project directory and run
 command, replacing `[name]` with your name.
 
 ```bash
-go mod init github.com/[name]/blog
+go mod init github.com/[name]/blog && go mod tidy
 ```
 
 Next, run the following commands that will install the required libraries for the tech challenge.
@@ -213,11 +205,17 @@ Next, run the following commands that will install the required libraries for th
 ```bash
 go get github.com/caarlos0/env/v11
 go get github.com/joho/godotenv
-go get github.com/jackc/pgx/v5/stdlib
-go get github.com/DATA-DOG/go-sqlmock
+go get github.com/aws/aws-sdk-go-v2/aws
+go get github.com/aws/aws-sdk-go-v2/config
+go get github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue
+go get github.com/aws/aws-sdk-go-v2/service/dynamodb
+go get github.com/aws/aws-sdk-go-v2/service/dynamodb/types
 go get github.com/swaggo/http-swagger/v2
+go get github.com/google/uuid
 go get github.com/swaggo/swag@latest
+go get github.com/stretchr/testify
 go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/vektra/mockery/v2@v2.49.0
 ```
 
 ## Next Steps
