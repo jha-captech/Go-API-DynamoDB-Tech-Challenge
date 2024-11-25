@@ -104,14 +104,18 @@ colima stop
 > 
 > try the following:
 >
+> - Ensure that the following directory exists: `~/.docker/cli-plugins`
 > - Create a symlink to the docker-compose plugin by running the following command:
 >  ```bash
->  [ ! -d "~/.docker/cli-plugins" ] && mkdir -p "~/.docker/cli-plugins" && ln -s /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
+>  ln -s /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
 >  ```
 
 ### NoSQL Workbench for DynamoDB 
 
 NoSQL Workbench for DynamoDB is an AWS tool for designing and managing DynamoDB tables. You can install it by following the instructions [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.settingup.html).
+
+> [!TIP]
+> We recommend manually downloading the installer rather than using the command line instructions. This should prevent any issues with permission errors.
 
 ### VSCode
 
